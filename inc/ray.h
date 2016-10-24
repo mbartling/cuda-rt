@@ -11,7 +11,7 @@
 #pragma warning(disable : 4786)
 
 #include "vec.h"
-#include "mat.h"
+//#include "mat.h"
 #include "common.h"
 
 // A ray has a position where the ray starts, and a direction (which should
@@ -20,36 +20,36 @@
 class ray {
     public:
 
-        __device__
-        ray(const Vec3d &pp, const Vec3d &dd)
+        __host__ __device__
+        ray(const Vec3f &pp, const Vec3f &dd)
             : p(pp), d(dd) {}
-        __device__
+        __host__ __device__
         ray(const ray& other) : p(other.p), d(other.d){}
-        __device__
+        __host__ __device__
         ~ray() {}
         // virtual ~ray(){}
-        __device__
+        __host__ __device__
         ray& operator =( const ray& other ) 
         { p = other.p; d = other.d; return *this; }
 
-        __device__
-        Vec3d at( double t ) const
+        __host__ __device__
+        Vec3f at( float t ) const
         { return p + (t*d); }
 
-        __device__
-        Vec3d getPosition() const { return p; }
-        __device__
-        Vec3d getDirection() const { return d; }
+        __host__ __device__
+        Vec3f getPosition() const { return p; }
+        __host__ __device__
+        Vec3f getDirection() const { return d; }
 
     public:
-        Vec3d p;
-        Vec3d d;
+        Vec3f p;
+        Vec3f d;
 };
 
 // The description of an intersection point.
 
-
-Vec3d CosWeightedRandomHemiDir2(Vec3d n);
+__host__ __device__
+Vec3f CosWeightedRandomHemiDir2(Vec3f n);
 
 
 #endif // __RAY_H__

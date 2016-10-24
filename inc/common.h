@@ -1,2 +1,2 @@
 #pragma once
-const float RAY_EPSILON = 0.00000001;
+const double RAY_EPSILON = 0.00000001;
