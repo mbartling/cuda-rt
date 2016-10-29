@@ -1,4 +1,5 @@
 #include "scene.h"
+#include <stdio.h>
 #include <thrust/device_vector.h>
 #include <thrust/device_ptr.h>
 #include <thrust/transform_reduce.h>
@@ -50,6 +51,8 @@ void Scene_d::computeBoundingBoxes(){
     int blocksPerGrid =
         (N + threadsPerBlock - 1) / threadsPerBlock;
     computeBoundingBoxes_kernel<<<blocksPerGrid, threadsPerBlock>>>(numTriangles, vertices, t_indices, BBoxs);
+    //cudaDeviceSynchronize();
+
 }
 
 void AverageSuperSampling(Vec3f* smallImage, 
@@ -83,9 +86,20 @@ void Scene_d::findMinMax(Vec3f& mMin, Vec3f& mMax){
 __global__ 
 void computeBoundingBoxes_kernel(int numTriangles, Vec3f* vertices, TriangleIndices* t_indices, BoundingBox* BBoxs){
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx > numTriangles) return;
+    if (idx >= numTriangles) return;
 
     TriangleIndices t_idx = t_indices[idx];
+    printf("idx(%d), a(%0.6f, %0.6f, %0.6f)\n" , idx, vertices[t_idx.a.vertex_index].x,
+                                     vertices[t_idx.a.vertex_index].y,
+                                     vertices[t_idx.a.vertex_index].z);
+
+    printf("idx(%d), b(%0.6f, %0.6f, %0.6f)\n" , idx, vertices[t_idx.b.vertex_index].x,
+                                     vertices[t_idx.b.vertex_index].y,
+                                     vertices[t_idx.b.vertex_index].z);
+
+    printf("idx(%d), c(%0.6f, %0.6f, %0.6f)\n" , idx, vertices[t_idx.c.vertex_index].x,
+                                     vertices[t_idx.c.vertex_index].y,
+                                     vertices[t_idx.c.vertex_index].z);
 
     BBoxs[idx] = computeTriangleBoundingBox(vertices[t_idx.a.vertex_index],vertices[t_idx.b.vertex_index],vertices[t_idx.c.vertex_index]);
 

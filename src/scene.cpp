@@ -67,6 +67,7 @@ Scene_h& Scene_h::operator = (const Scene_d& deviceScene){
 Scene_d& Scene_d::operator = (const Scene_h& hostScene){
     numVertices = hostScene.mAttributes.vertices.size();
     numTriangles = hostScene.t_indices.size();
+    printf("num of triangles : %d " , numTriangles);
     numMaterials = hostScene.materials.size();
     imageWidth = hostScene.imageWidth * hostScene.superSampling;
     imageHeight = hostScene.imageHeight * hostScene.superSampling;
@@ -93,7 +94,9 @@ Scene_d& Scene_d::operator = (const Scene_h& hostScene){
     Vec3f mMin;
     Vec3f mMax;
     findMinMax(mMin, mMax);
-    bvh.setUp(vertices,normals, BBoxs, t_indices, numTriangles, materials);
+    bvh.setUp(vertices,normals, BBoxs, t_indices, numTriangles, materials, mMin , mMax);
+    printf("found min(%0.6f, %0.6f , %0.6f)" , mMin.x , mMin.y , mMin.z);
+    printf("found max(%0.6f, %0.6f , %0.6f)" , mMax.x , mMax.y , mMax.z);
 
 
     return *this;
