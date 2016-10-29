@@ -46,9 +46,9 @@ void Scene_h::LoadObj(string filename){
 
             t_indices.push_back(index);
             material_ids.push_back(shapes[s].mesh.material_ids[f]);
+            index_offset += 3;
         }
         
-        index_offset += 3;
 
     }
 }
