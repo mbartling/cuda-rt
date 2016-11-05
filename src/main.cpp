@@ -121,6 +121,8 @@ int main(int argc, char* argv[])
 {
   string sceneName = "";
   vector<string> x;
+  float arr[3];
+  string::size_type sz;
   fprintf(stdout, "cp0 \n");
   argc-=(argc>0); argv+=(argc>0); // skip program name argv[0] if present
   option::Stats stats(usage, argc, argv);
@@ -183,8 +185,11 @@ int main(int argc, char* argv[])
         {
 	    fprintf(stdout, "--light color with argument '%s'\n", opt.arg);
             split(opt.arg, ',', x);
-            for(int i=0; i < x.size(); i++)
-                fprintf(stdout, "options for color are %s \n", x[i].c_str());
+            for(int i=0; i < x.size(); i++) {
+                arr[i] = stof(x[i], &sz);
+                fprintf(stdout, "options for color are %f \n", arr[i]);
+            }
+            Vec3f color = Vec3f(arr[0], arr[1], arr[2]);
         }
         break;
       case NUMERIC:
