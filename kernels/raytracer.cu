@@ -10,7 +10,7 @@ __global__
 void runRayTracerKernel(Scene_d scene, int depth);
 
 __global__ 
-void runRayTracerKernelRec(Scene_d scene, int depth);
+void runRayTracerKernelRec(Scene_d scene, int depth, Light_h hostLight);
 
 __device__ 
 Vec3f traceRay(Scene_d* scene, ray& r, int depth);
@@ -21,11 +21,11 @@ void RayTracer::run(){
     dim3 gridDim(deviceScene.imageWidth/blockDim.x, deviceScene.imageHeight/blockDim.y);
     int stackDepth = ( 1 << depth) - 1;
     //runRayTracerKernel<<<gridDim, blockDim, stackDepth*sizeof(RayStack)>>>(deviceScene, depth);
-    runRayTracerKernelRec<<<gridDim, blockDim>>>(deviceScene, depth);
+    runRayTracerKernelRec<<<gridDim, blockDim>>>(deviceScene, depth, hostLight);
 }
 
 __global__
-void runRayTracerKernelRec(Scene_d scene, int depth){
+void runRayTracerKernelRec(Scene_d scene, int depth, Light_h hostLight){
 
     int px = blockIdx.x * blockDim.x + threadIdx.x;
     int py = blockIdx.y * blockDim.y + threadIdx.y;
@@ -41,6 +41,8 @@ void runRayTracerKernelRec(Scene_d scene, int depth){
     ray r;
     scene.camera.rayThrough(x, y, r);
     Vec3f colorC;
+    Light light(&scene, hostLight);
+    scene.light = &light;
     colorC = traceRay(&scene, r, depth);
 
     scene.image[idx] = colorC;
