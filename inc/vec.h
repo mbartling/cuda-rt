@@ -31,7 +31,7 @@ class Vec3f{
         Vec3f& operator /= (float a){ x /= a; y /= a; z /= a; return *this; }
         
         __host__ __device__
-        Vec3f operator - (){ return Vec3f(-x, -y, -z); }
+        Vec3f operator - () const { return Vec3f(-x, -y, -z); }
         
         __host__ __device__
         Vec3f& operator *= (float a){ x *= a; y *= a; z *= a; return *this; }

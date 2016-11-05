@@ -41,6 +41,6 @@ class Light {
         
         //Point Light
         __host__ __device__
-        Light(Scene_d* scene, const Vec3f& col, const Vec3f& position) : color(col), scene(scene), position(position) {}
+        Light(Scene_d* scene, const Vec3f& col, const Vec3f& position, const Vec3f& orientation) : color(col), scene(scene), position(position), orientation(orientation) {}
 
 };

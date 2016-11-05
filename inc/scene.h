@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include "material.h"
 #include "isect.h"
+#include "camera.h"
 
 using namespace tinyobj;
 using std::vector;
@@ -77,6 +78,7 @@ class Scene_d{
         BVH_d bvh;
 
         Light* light;
+        Camera camera;
 
         friend class Scene_h;
     public:
@@ -93,6 +95,9 @@ class Scene_d{
 
         __device__
         Light* getLight(){ return light; }
+
+        __device__
+        Camera* getCamera() { return &camera; }
 
         ~Scene_d();
 

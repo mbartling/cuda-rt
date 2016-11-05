@@ -24,6 +24,9 @@ class ray {
         ray(const Vec3f &pp, const Vec3f &dd)
             : p(pp), d(dd) {}
         __host__ __device__
+        ray()
+            : p(), d() {}
+        __host__ __device__
         ray(const ray& other) : p(other.p), d(other.d){}
         __host__ __device__
         ~ray() {}

@@ -21,7 +21,7 @@ void RayTracer::run(){
     dim3 gridDim(deviceScene.imageWidth/blockDim.x, deviceScene.imageHeight/blockDim.y);
     int stackDepth = ( 1 << depth) - 1;
     //runRayTracerKernel<<<gridDim, blockDim, stackDepth*sizeof(RayStack)>>>(deviceScene, depth);
-    runRayTracerKernelRec(deviceScene, depth);
+    runRayTracerKernelRec<<<gridDim, blockDim>>>(deviceScene, depth);
 }
 
 __global__
@@ -66,7 +66,7 @@ Vec3f traceRay(Scene_d* scene, ray& r, int depth){
         // Instead of just returning the result of shade(), add some
         // more steps: add in the contributions from reflected and refracted
         // rays.
-        const Material& m = i.getMaterial();	  
+        const Material& m = i.material;	  
         colorC = m.shade(scene, r, i);
         if(depth <= 0) return colorC;
         if(m.Refl()){

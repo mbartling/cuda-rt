@@ -43,7 +43,7 @@ struct Material {
         }
 
     __device__
-        Vec3f shade(Scene_d* scene, const ray& r, const isect& i){
+        Vec3f shade(Scene_d* scene, const ray& r, const isect& i) const {
  //           Vec3f I = ke + (ka % scene->ambient());
             Vec3f I = kd;
 
