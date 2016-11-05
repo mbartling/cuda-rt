@@ -68,43 +68,60 @@ struct Arg: public option::Arg
   }
 };
 
-enum  optionIndex { UNKNOWN, HELP, OPTIONAL, REQUIRED, NUMERIC, NONEMPTY };
+void split(const std::string &s, char delim, std::vector<std::string> &elems) {
+    std::stringstream ss;
+    ss.str(s);
+    std::string item;
+    while (std::getline(ss, item, delim)) {
+        elems.push_back(item);
+    }
+}
+
+ enum  optionIndex { UNKNOWN, HELP, OPTIONAL, REQUIRED, NUMERIC,lORIENTATION, lPOSITION, lCOLOR, NONEMPTY };
 const option::Descriptor usage[] = {
-{ UNKNOWN, 0,"", "",        Arg::Unknown, "USAGE: example_arg [options]\n\n"
-                                          "Options:" },
-{ HELP,    0,"", "help",    Arg::None,    "  \t--help  \tPrint usage and exit." },
-{ OPTIONAL,0,"o","optional",Arg::Optional,"  -o[<arg>], \t--optional[=<arg>]"
-                                          "  \tTakes an argument but is happy without one." },
-{ REQUIRED,0,"r","required",Arg::Required,"  -r <arg>, \t--required=<arg>  \tMust have an argument." },
-{ NUMERIC, 0,"n","numeric", Arg::Numeric, "  -n <num>, \t--numeric=<num>  \tRequires a number as argument." },
-{ NONEMPTY,0,"1","nonempty",Arg::NonEmpty,"  -1 <arg>, \t--nonempty=<arg>"
-                                          "  \tCan NOT take the empty string as argument." },
-{ UNKNOWN, 0,"", "",        Arg::None,
- "\nExamples:\n"
- "  example_arg --unknown -o -n10 \n"
- "  example_arg -o -n10 file1 file2 \n"
- "  example_arg -nfoo file1 file2 \n"
- "  example_arg --optional -- file1 file2 \n"
- "  example_arg --optional file1 file2 \n"
- "  example_arg --optional=file1 file2 \n"
- "  example_arg --optional=  file1 file2 \n"
- "  example_arg -o file1 file2 \n"
- "  example_arg -ofile1 file2 \n"
- "  example_arg -unk file1 file2 \n"
- "  example_arg -r -- file1 \n"
- "  example_arg -r file1 \n"
- "  example_arg --required \n"
- "  example_arg --required=file1 \n"
- "  example_arg --nonempty= file1 \n"
- "  example_arg --nonempty=foo --numeric=999 --optional=bla file1 \n"
- "  example_arg -1foo \n"
- "  example_arg -1 -- \n"
- "  example_arg -1 \"\" \n"
-},
-{ 0, 0, 0, 0, 0, 0 } };
+  { UNKNOWN, 0,"", "",        Arg::Unknown, "USAGE: example_arg [options]\n\n"
+                                            "Options:" },
+  { HELP,    0,"", "help",    Arg::None,    "  \t--help  \tPrint usage and exit." },
+  { OPTIONAL,0,"o","optional",Arg::Optional,"  -o[<arg>], \t--optional[=<arg>]"
+                                            "  \tTakes an argument but is happy without one." },
+  { REQUIRED,0,"r","required",Arg::Required,"  -r <arg>, \t--required=<arg>  \tMust have an argument." },
+  { NUMERIC, 0,"n","numeric", Arg::Numeric, "  -n <num>, \t--numeric=<num>  \tRequires a number as argument." },
+  { NONEMPTY,0,"1","nonempty",Arg::NonEmpty,"  -1 <arg>, \t--nonempty=<arg>"
+                                            "  \tCan NOT take the empty string as argument." },
+  { lORIENTATION, 0,"li","light orientation", Arg::Required, "  -li <float>, \t--required=<arg>  \tRequires 3 floats as argument." },
+  { lPOSITION, 0,"lp","light position", Arg::Required, "  -lp <float>, \t--required=<arg>  \tRequires 3 floats as argument." },
+  { lCOLOR, 0,"c","light color", Arg::Required, "  -c <float>, \t--required=<arg>  \tRequires 3 floats as argument." },
+
+  { UNKNOWN, 0,"", "",        Arg::None,
+   "\nExamples:\n"
+   "  example_arg --unknown -o -n10 \n"
+   "  example_arg -o -n10 file1 file2 \n"
+   "  example_arg -nfoo file1 file2 \n"
+   "  example_arg --optional -- file1 file2 \n"
+   "  example_arg --optional file1 file2 \n"
+   "  example_arg --optional=file1 file2 \n"
+   "  example_arg --optional=  file1 file2 \n"
+   "  example_arg -o file1 file2 \n"
+   "  example_arg -ofile1 file2 \n"
+   "  example_arg -unk file1 file2 \n"
+   "  example_arg -r -- file1 \n"
+   "  example_arg -r file1 \n"
+   "  example_arg --required \n"
+   "  example_arg --required=file1 \n"
+   "  example_arg --nonempty= file1 \n"
+   "  example_arg --nonempty=foo --numeric=999 --optional=bla file1 \n"
+   "  example_arg -1foo \n"
+   "  example_arg -1 -- \n"
+   "  example_arg -1 \"\" \n"
+  },
+  { 0, 0, 0, 0, 0, 0 } 
+};
 
 int main(int argc, char* argv[])
 {
+  string sceneName = "";
+  vector<string> x;
+  fprintf(stdout, "cp0 \n");
   argc-=(argc>0); argv+=(argc>0); // skip program name argv[0] if present
   option::Stats stats(usage, argc, argv);
 
@@ -148,13 +165,27 @@ int main(int argc, char* argv[])
         break;
       case REQUIRED:
 	{
-		fprintf(stdout, "--required with argument '%s'\n", opt.arg);
-		/*build the tree */
-                Scene_h scene(1024,1024, 1);
-                scene.LoadObj(opt.arg);
-
-		bvh(scene);
+	    fprintf(stdout, "--required with argument '%s'\n", opt.arg);
+            sceneName = opt.arg;
 	}
+        break;
+      case lORIENTATION:
+        {
+	    fprintf(stdout, "--light orientation with argument '%s'\n", opt.arg);
+        }
+        break;
+      case lPOSITION:
+        {
+	    fprintf(stdout, "--light position with argument '%s'\n", opt.arg);
+        }
+        break;
+      case lCOLOR:
+        {
+	    fprintf(stdout, "--light color with argument '%s'\n", opt.arg);
+            split(opt.arg, ',', x);
+            for(int i=0; i < x.size(); i++)
+                fprintf(stdout, "options for color are %s \n", x[i].c_str());
+        }
         break;
       case NUMERIC:
         fprintf(stdout, "--numeric with argument '%s'\n", opt.arg);
@@ -171,4 +202,10 @@ int main(int argc, char* argv[])
 
   for (int i = 0; i < parse.nonOptionsCount(); ++i)
     fprintf(stdout, "Non-option argument #%d is %s\n", i, parse.nonOption(i));
+
+  /*build the tree */
+  Scene_h scene(1024,1024, 1);
+  scene.LoadObj(sceneName);
+  bvh(scene);
+
 }
