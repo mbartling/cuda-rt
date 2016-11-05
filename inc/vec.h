@@ -114,6 +114,17 @@ void normalize(Vec3f& a){
     float sqinv = 1.0/sqrtf(a.x*a.x + a.y*a.y + a.z*a.z); //rnorm3df(a.x, a.y, a.z); TODO where is this defined
     a *= sqinv;
 }
+__host__ __device__ __inline__
+void clamp(float& a){
+    if (a < 0) a = 0.0;
+    if (a > 1) a = 1.0;
+}
+__host__ __device__ __inline__
+void clamp(Vec3f& a){
+    clamp(a.x);
+    clamp(a.y);
+    clamp(a.z);
+}
 
 __host__ __device__ __inline__
 float norm(const Vec3f& a){

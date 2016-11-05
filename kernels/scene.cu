@@ -136,7 +136,9 @@ void AverageSuperSamplingKernel(Vec3f* smallImage, Vec3f* deviceImage, int image
             int idxX = pixelX*superSampling + j;
             int idxY = pixelY*superSampling + i;
             int idx = idxY*superSampling*imageWidth + idxX;
-            mSum += deviceImage[idx];
+            Vec3f temp = deviceImage[idx];
+            clamp(temp);
+            mSum += temp; //Force it to be between 0 and 1
         }
     }
 

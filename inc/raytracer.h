@@ -1,6 +1,12 @@
 #pragma once
 #include "scene.h"
+#include "bitmap.h"
 
+struct RGB {
+    unsigned char r;
+    unsigned char g;
+    unsigned char b;
+};
 class RayTracer{
     private:
         int imageWidth;
@@ -9,7 +15,7 @@ class RayTracer{
 
         int depth;
 
-        Vec3f* image; //Host side
+        RGB* image; //Host side
         Scene_h hostScene;
         Scene_d deviceScene;
     
@@ -17,19 +23,31 @@ class RayTracer{
 
         RayTracer(): imageWidth(512), imageHeight(512), superSampling(1), hostScene(imageWidth, imageHeight, superSampling), depth(1)
         {
-            image = new Vec3f[imageWidth*imageHeight];
         }
         
         RayTracer(int imageWidth, int imageHeight, int superSampling): imageWidth(512), imageHeight(512), superSampling(1), hostScene(imageWidth, imageHeight, superSampling), depth(1)
         {
-            image = new Vec3f[imageWidth*imageHeight];
         }
 
         void LoadObj(string filename){ hostScene.LoadObj(filename); }
         void setUpDevice(){ deviceScene = hostScene; }
         
-        void pullRaytracedImage(){ hostScene = deviceScene; }
-        void writeImage(string filename) {} //TODO
+        void pullRaytracedImage(){ 
+            if (image == nullptr)
+                image = new RGB[imageWidth*imageHeight];
+            hostScene = deviceScene; 
+            vector<Vec3f> hostSceneImage = hostScene.getImage();
+            for(int i = 0; i < hostSceneImage.size(); i++){
+                image[i].r = (unsigned char)(255.0 * hostSceneImage[i].x);
+                image[i].g = (unsigned char)(255.0 * hostSceneImage[i].y);
+                image[i].b = (unsigned char)(255.0 * hostSceneImage[i].z);
+            }
+
+        }
+        void writeImage(string filename) { 
+            
+            writeBMP(filename.c_str(), imageWidth, imageHeight, (unsigned char*)image); 
+        }
 
         void run();
         
