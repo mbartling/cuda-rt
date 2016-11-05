@@ -76,7 +76,7 @@ class Scene_d{
         Vec3f* image;
         BVH_d bvh;
 
-        Light light;
+        Light* light;
 
         friend class Scene_h;
     public:
