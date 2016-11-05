@@ -6,6 +6,7 @@
 class Scene_d;
 class ray;
 class isect;
+class Light;
 
 struct Material {
     Vec3f ka; //Ambient
@@ -50,7 +51,7 @@ struct Material {
  //           V = -V;
  //           normalize(V);
 
- //           AreaLight* pLight  = scene->getAreaLight();
+ //           AreaLight* pLight  = scene->getLight();
  //           Vec3f lightDir = pLight->getDirection(r.at(i.t));
  //           ray toLightR(r.at(i.t), lightDir);
 

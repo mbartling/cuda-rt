@@ -76,6 +76,8 @@ class Scene_d{
         Vec3f* image;
         BVH_d bvh;
 
+        Light light;
+
         friend class Scene_h;
     public:
 
@@ -88,6 +90,9 @@ class Scene_d{
         bool intersect(const ray& r, isect& i){ //Find the closest point of intersection
             return bvh.intersect(r, i);
         }
+
+        __device__
+        Light* getLight(){ return light; }
 
         ~Scene_d();
 

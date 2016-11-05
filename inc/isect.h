@@ -9,5 +9,7 @@ class isect {
         int object_id;
         Material material; // For smooth shading
 
+        __device__
+        Material& getMaterial() { return material; }
 
 };
