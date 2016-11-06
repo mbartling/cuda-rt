@@ -78,21 +78,21 @@ void split(const std::string &s, char delim, std::vector<std::string> &elems) {
     }
 }
 
- enum  optionIndex { UNKNOWN, HELP, INPUT, NUMERIC,lORIENTATION, lPOSITION, lCOLOR, NONEMPTY, OUTPUT };
+ enum  optionIndex { UNKNOWN, HELP, INPUT, NUMERIC, lORIENTATION, lPOSITION, lCOLOR, NONEMPTY, OUTPUT };
 const option::Descriptor usage[] = {
   { UNKNOWN, 0,"", "",        Arg::Unknown, "USAGE: example_arg [options]\n\n"
                                             "Options:" },
   { HELP,    0,"", "help",    Arg::None,    "  \t--help  \tPrint usage and exit." },
   //{ OPTIONAL,0,"o","optional",Arg::Optional,"  -o[<arg>], \t--optional[=<arg>]"
   //                                          "  \tTakes an argument but is happy without one." },
-  { INPUT,0,"i","required",Arg::Required,"  -i <arg>, \t--required=<arg>  \tMust have an argument." },
+  { INPUT,0,"i","input",Arg::Required,"  -i <arg>, \t--input=<arg>  \tInput file required." },
   { NUMERIC, 0,"n","numeric", Arg::Numeric, "  -n <num>, \t--numeric=<num>  \tRequires a number as argument." },
   { NONEMPTY,0,"1","nonempty",Arg::NonEmpty,"  -1 <arg>, \t--nonempty=<arg>"
                                             "  \tCan NOT take the empty string as argument." },
-  { lORIENTATION, 0,"d","light orientation", Arg::Required, "  -d <float>, \t--required=<arg>  \tRequires 3 floats as argument." },
-  { lPOSITION, 0,"p","light position", Arg::Required, "  -p <float>, \t--required=<arg>  \tRequires 3 floats as argument." },
-  { lCOLOR, 0,"c","light color", Arg::Required, "  -c <float>, \t--required=<arg>  \tRequires 3 floats as argument." },
-  { OUTPUT, 0,"o","Output File Name", Arg::Required, "  -o <arg>, \t--required=<arg>  \tRequires an argument." },
+  { lORIENTATION, 0,"d","orientation", Arg::Required, "  -d <float,float,float>, \t--orientation=<float,float,float>  \tRequires 3 floats as argument." },
+  { lPOSITION, 0,"p","position", Arg::Required, "  -p <float,float,float>, \t--position=<float,float,float>  \tRequires 3 floats as argument." },
+  { lCOLOR, 0,"c","color", Arg::Required, "  -c <float,float,float>, \t--color=<float,float,float>  \tRequires 3 floats as argument." },
+  { OUTPUT, 0,"o","output", Arg::Required, "  -o <arg>, \t--output=<arg>  \tOutput file argument required." },
 
   { UNKNOWN, 0,"", "",        Arg::None,
    "\nExamples:\n"
