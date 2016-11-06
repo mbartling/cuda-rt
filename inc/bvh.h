@@ -128,10 +128,10 @@ class BVH_d {
                 //if(!parent->materials.empty() && parent->hasVertexMaterials()){
                 Material aM;
                 //TODO Be able to uncomment the following lines
-                //int material_id = material_ids[object_id];
-                //aM += (1 - (alpha + beta))*(materials[ids.a]); 
-                //aM +=                alpha*(materials[ids.b]); 
-                //aM +=                beta* (materials[ids.c]); 
+                int material_id = material_ids[object_id];
+                aM += (1 - (alpha + beta))*(materials[ids.a]); 
+                aM +=                alpha*(materials[ids.b]); 
+                aM +=                beta* (materials[ids.c]); 
 
                 i.material = aM;
 
@@ -141,6 +141,18 @@ class BVH_d {
             }
             __device__
                 bool intersect(const ray& r, isect& i){
+                    bool haveOne = false;
+                    isect cur;
+                    for(int j = 0; j < numTriangles; j++){
+                        if(intersectTriangle(r, cur, object_ids[j])){
+                            if(!haveOne || (cur.t < i.t)){
+                                i = cur;
+                                haveOne = true;
+                            }
+                        }
+                    }
+                if(!haveOne) i.t = 1000.0;
+                return haveOne;
 
                 }
 

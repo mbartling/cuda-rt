@@ -1,4 +1,5 @@
 #include "scene.h"
+#include <stdio.h>
 
 
 // Load the OBJ and add all the triangles to a linear array

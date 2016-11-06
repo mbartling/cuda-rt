@@ -1,4 +1,7 @@
 #include "raytracer.h"
+#include <stdio.h>
+
+#define PRINTVEC3(x) printf("(%f,%f,%f)",x.x,x.y,x.z)
 struct RayStack{
     ray r;
     isect i;
@@ -40,6 +43,7 @@ void runRayTracerKernelRec(Scene_d scene, int depth, Light_h hostLight){
     //y += randy; //in [0,1]
     ray r;
     scene.camera.rayThrough(x, y, r);
+    //printf("RAY %d, p=(%f,%f,%f), d=(%f,%f,%f)\n", idx, r.p.x, r.p.y, r.p.z, r.d.x, r.d.y, r.d.z);
     Vec3f colorC;
     Light light(&scene, hostLight);
     scene.light = &light;
@@ -59,7 +63,8 @@ Vec3f traceRay(Scene_d* scene, ray& r, int depth){
     if(scene->intersect(r, i)) {
         // YOUR CODE HERE
         Vec3f q = r.at(i.t);
-
+        
+        printf("q=(%f,%f,%f)\n", q.x, q.y, q.z);
         // An intersection occurred!  We've got work to do.  For now,
         // this code gets the material for the surface that was intersected,
         // and asks that material to provide a color for the ray.  
@@ -80,7 +85,7 @@ Vec3f traceRay(Scene_d* scene, ray& r, int depth){
             ray R(q, Rdir);
             colorC += m.kr % traceRay(scene, R, depth - 1);
         }
-
+/*
         // Now handle the Transmission (Refraction)
         if(m.Trans()){
 
@@ -112,6 +117,7 @@ Vec3f traceRay(Scene_d* scene, ray& r, int depth){
             }
 
         }
+        */
 
     } else {
         // No intersection.  This ray travels to infinity, so we color
