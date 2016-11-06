@@ -46,7 +46,7 @@ class Scene_h{
         Scene_h(): imageWidth(512), imageHeight(512), superSampling(1) {}
         Scene_h(int imageWidth, int imageHeight, int superSampling): imageWidth(imageWidth), imageHeight(imageHeight), superSampling(superSampling) {}
 
-        void LoadObj(string filename);
+        void LoadObj(string filename, string mtl_basepath);
         vector<Vec3f> getImage() const {return image;}
 
         Scene_h& operator = (const Scene_d& deviceScene); //Copy image from the device

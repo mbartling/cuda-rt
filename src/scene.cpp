@@ -2,12 +2,12 @@
 
 
 // Load the OBJ and add all the triangles to a linear array
-void Scene_h::LoadObj(string filename){
+void Scene_h::LoadObj(string filename, string mtl_basepath){
     vector<shape_t> shapes;
     vector<material_t> material;
     string err;
 
-    bool ret = tinyobj::LoadObj(&mAttributes, &shapes, &material, &err, filename.c_str());
+    bool ret = tinyobj::LoadObj(&mAttributes, &shapes, &material, &err, filename.c_str(), mtl_basepath.c_str());
 
     if (!err.empty()) { // `err` may contain warning message.
         std::cerr << err << std::endl;

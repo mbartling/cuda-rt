@@ -41,7 +41,7 @@ class RayTracer{
                 hostLight.color = Vec3f(1.0, 1.0, 1.0);
         }
 
-        void LoadObj(string filename){ hostScene.LoadObj(filename); }
+        void LoadObj(string filename, string mtl_basepath){ hostScene.LoadObj(filename, mtl_basepath); }
         void setUpDevice(){ deviceScene = hostScene; }
         void setHostLight(const Light_h& mLight) { 
             hostLight = mLight; 

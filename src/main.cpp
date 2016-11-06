@@ -78,20 +78,21 @@ void split(const std::string &s, char delim, std::vector<std::string> &elems) {
     }
 }
 
- enum  optionIndex { UNKNOWN, HELP, OPTIONAL, REQUIRED, NUMERIC,lORIENTATION, lPOSITION, lCOLOR, NONEMPTY };
+ enum  optionIndex { UNKNOWN, HELP, INPUT, NUMERIC,lORIENTATION, lPOSITION, lCOLOR, NONEMPTY, OUTPUT };
 const option::Descriptor usage[] = {
   { UNKNOWN, 0,"", "",        Arg::Unknown, "USAGE: example_arg [options]\n\n"
                                             "Options:" },
   { HELP,    0,"", "help",    Arg::None,    "  \t--help  \tPrint usage and exit." },
-  { OPTIONAL,0,"o","optional",Arg::Optional,"  -o[<arg>], \t--optional[=<arg>]"
-                                            "  \tTakes an argument but is happy without one." },
-  { REQUIRED,0,"r","required",Arg::Required,"  -r <arg>, \t--required=<arg>  \tMust have an argument." },
+  //{ OPTIONAL,0,"o","optional",Arg::Optional,"  -o[<arg>], \t--optional[=<arg>]"
+  //                                          "  \tTakes an argument but is happy without one." },
+  { INPUT,0,"i","required",Arg::Required,"  -i <arg>, \t--required=<arg>  \tMust have an argument." },
   { NUMERIC, 0,"n","numeric", Arg::Numeric, "  -n <num>, \t--numeric=<num>  \tRequires a number as argument." },
   { NONEMPTY,0,"1","nonempty",Arg::NonEmpty,"  -1 <arg>, \t--nonempty=<arg>"
                                             "  \tCan NOT take the empty string as argument." },
   { lORIENTATION, 0,"d","light orientation", Arg::Required, "  -d <float>, \t--required=<arg>  \tRequires 3 floats as argument." },
   { lPOSITION, 0,"p","light position", Arg::Required, "  -p <float>, \t--required=<arg>  \tRequires 3 floats as argument." },
   { lCOLOR, 0,"c","light color", Arg::Required, "  -c <float>, \t--required=<arg>  \tRequires 3 floats as argument." },
+  { OUTPUT, 0,"o","Output File Name", Arg::Required, "  -o <arg>, \t--required=<arg>  \tRequires an argument." },
 
   { UNKNOWN, 0,"", "",        Arg::None,
    "\nExamples:\n"
@@ -120,10 +121,10 @@ const option::Descriptor usage[] = {
 
 int main(int argc, char* argv[])
 {
-  string sceneName = "";
+  string sceneName = "", outputFile = "", mtlFile = "";
   vector<string> x;
   float arr[3];
-  Vec3f color = Vec3f(0.f,0.f,0.f), position = Vec3f(0.f,0.f,0.f), orientation = Vec3f(0.f,0.f,0.f);
+  Vec3f color = Vec3f(1.f,1.f,1.f), position = Vec3f(1.f,1.f,1.f), orientation = Vec3f(1.f,1.f,1.f);
   string::size_type sz;
 
   argc-=(argc>0); argv+=(argc>0); // skip program name argv[0] if present
@@ -161,16 +162,19 @@ int main(int argc, char* argv[])
     {
       case HELP:
         // not possible, because handled further above and exits the program
-      case OPTIONAL:
-        if (opt.arg)
-          fprintf(stdout, "--optional with optional argument '%s'\n", opt.arg);
-        else
-          fprintf(stdout, "--optional without the optional argument\n");
-        break;
-      case REQUIRED:
+      //case OPTIONAL:
+      //  if (opt.arg)
+      //    fprintf(stdout, "--optional with optional argument '%s'\n", opt.arg);
+      //  else
+      //    fprintf(stdout, "--optional without the optional argument\n");
+      //  break;
+      case INPUT:
 	{
 	    fprintf(stdout, "--required with argument '%s'\n", opt.arg);
             sceneName = opt.arg;
+            int found = sceneName.find_last_of("/");
+            mtlFile = sceneName.substr(0,found+1);
+	    fprintf(stdout, "mtlFile = %s\n", mtlFile.c_str());
 	}
         break;
       case lORIENTATION:
@@ -211,6 +215,12 @@ int main(int argc, char* argv[])
       case NONEMPTY:
         fprintf(stdout, "--nonempty with argument '%s'\n", opt.arg);
         break;
+      case OUTPUT:
+        {
+	    fprintf(stdout, "--output with argument '%s'\n", opt.arg);
+            outputFile = opt.arg;
+        }
+        break;
       case UNKNOWN:
         // not possible because Arg::Unknown returns ARG_ILLEGAL
         // which aborts the parse with an error
@@ -228,7 +238,7 @@ int main(int argc, char* argv[])
   //bvh(scene);
 
   RayTracer rayTracer;
-  rayTracer.LoadObj(sceneName);
+  rayTracer.LoadObj(sceneName, mtlFile);
   Light_h hLight;
   hLight.color = color;
   hLight.position = position;
@@ -237,5 +247,7 @@ int main(int argc, char* argv[])
   
   rayTracer.setUpDevice();
   rayTracer.run();
+  rayTracer.pullRaytracedImage();
+  rayTracer.writeImage(outputFile);
  
 }
