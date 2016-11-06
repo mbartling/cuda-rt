@@ -26,16 +26,27 @@ class RayTracer{
         RayTracer(): imageWidth(512), imageHeight(512), superSampling(1), hostScene(imageWidth, imageHeight, superSampling), depth(1)
         {
                 image = new RGB[imageWidth*imageHeight];
+                hostLight.position = Vec3f(10.0, 10.0, 10.0);
+                hostLight.orientation = Vec3f(10.0, 10.0, 10.0);
+                normalize(hostLight.orientation);
+                hostLight.color = Vec3f(1.0, 1.0, 1.0);
         }
         
         RayTracer(int imageWidth, int imageHeight, int superSampling): imageWidth(512), imageHeight(512), superSampling(1), hostScene(imageWidth, imageHeight, superSampling), depth(1)
         {
                 image = new RGB[imageWidth*imageHeight];
+                hostLight.position = Vec3f(10.0, 10.0, 10.0);
+                hostLight.orientation = Vec3f(10.0, 10.0, 10.0);
+                normalize(hostLight.orientation);
+                hostLight.color = Vec3f(1.0, 1.0, 1.0);
         }
 
         void LoadObj(string filename){ hostScene.LoadObj(filename); }
         void setUpDevice(){ deviceScene = hostScene; }
-        void setHostLight(const Light_h& mLight) { hostLight = mLight; }
+        void setHostLight(const Light_h& mLight) { 
+            hostLight = mLight; 
+            normalize(hostLight.orientation);
+        }
         
         void pullRaytracedImage(){ 
             hostScene = deviceScene; 
