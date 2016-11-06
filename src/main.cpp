@@ -125,7 +125,7 @@ int main(int argc, char* argv[])
 {
   string sceneName = "", outputFile = "", mtlFile = "", temp = "";
   vector<string> x;
-  int height=0, width=0;
+  int height=512, width=512;
   float arr[3];
   Vec3f color = Vec3f(1.f,1.f,1.f), position = Vec3f(1.f,1.f,1.f), orientation = Vec3f(1.f,1.f,1.f);
   string::size_type sz;
