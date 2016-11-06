@@ -96,7 +96,7 @@ Scene_d& Scene_d::operator = (const Scene_h& hostScene){
     Vec3f mMin;
     Vec3f mMax;
     findMinMax(mMin, mMax);
-    bvh.setUp(vertices,normals, BBoxs, t_indices, numTriangles, materials, mMin , mMax);
+    bvh.setUp(vertices,normals, BBoxs, t_indices, numTriangles, materials, mMin , mMax, &material_ids[0]);
     printf("found min(%0.6f, %0.6f , %0.6f)" , mMin.x , mMin.y , mMin.z);
     printf("found max(%0.6f, %0.6f , %0.6f)" , mMax.x , mMax.y , mMax.z);
 

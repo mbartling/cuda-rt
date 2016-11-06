@@ -1,12 +1,13 @@
 #include "bvh.h"
 
-void BVH_d::setUp(Vec3f* mvertices, Vec3f* mnormals, BoundingBox* mBBoxs, TriangleIndices* mt_indices, int mnumTriangles, Material* mmaterials, Vec3f mMin, Vec3f mMax){
+void BVH_d::setUp(Vec3f* mvertices, Vec3f* mnormals, BoundingBox* mBBoxs, TriangleIndices* mt_indices, int mnumTriangles, Material* mmaterials, Vec3f mMin, Vec3f mMax, int* mmaterial_ids){
     numTriangles = mnumTriangles;
     normals = mnormals;
     vertices = mvertices;
     BBoxs = mBBoxs;
     t_indices = mt_indices;
     materials = mmaterials;
+    material_ids = mmaterial_ids;    
 
     cudaMalloc(&mortonCodes, numTriangles*sizeof(unsigned int));
     cudaMalloc(&object_ids, numTriangles*sizeof(unsigned int));

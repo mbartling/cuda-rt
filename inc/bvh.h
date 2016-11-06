@@ -49,12 +49,12 @@ class BVH_d {
         BoundingBox* BBoxs;
         TriangleIndices* t_indices;
         Material* materials;
-        
+        int* material_ids;       
 
 
     public:
 
-        void setUp(Vec3f* mvertices, Vec3f* mnormals, BoundingBox* mBBoxs, TriangleIndices* mt_indices, int mnumTriangles, Material* mmaterials, Vec3f mMin , Vec3f mMax);
+        void setUp(Vec3f* mvertices, Vec3f* mnormals, BoundingBox* mBBoxs, TriangleIndices* mt_indices, int mnumTriangles, Material* mmaterials, Vec3f mMin , Vec3f mMax, int* mmaterial_ids);
         ~BVH_d();
         void computeMortonCodes(Vec3f& mMin, Vec3f& mMax); //Also Generates the objectIds
         void sortMortonCodes();
