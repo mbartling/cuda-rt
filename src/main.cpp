@@ -20,6 +20,7 @@
 #include "optionparser.h"
 #include "bvh.h"
 #include "scene.h"
+#include "raytracer.h"
 #include "tiny_obj_loader.h"
 
 
@@ -88,8 +89,8 @@ const option::Descriptor usage[] = {
   { NUMERIC, 0,"n","numeric", Arg::Numeric, "  -n <num>, \t--numeric=<num>  \tRequires a number as argument." },
   { NONEMPTY,0,"1","nonempty",Arg::NonEmpty,"  -1 <arg>, \t--nonempty=<arg>"
                                             "  \tCan NOT take the empty string as argument." },
-  { lORIENTATION, 0,"li","light orientation", Arg::Required, "  -li <float>, \t--required=<arg>  \tRequires 3 floats as argument." },
-  { lPOSITION, 0,"lp","light position", Arg::Required, "  -lp <float>, \t--required=<arg>  \tRequires 3 floats as argument." },
+  { lORIENTATION, 0,"d","light orientation", Arg::Required, "  -d <float>, \t--required=<arg>  \tRequires 3 floats as argument." },
+  { lPOSITION, 0,"p","light position", Arg::Required, "  -p <float>, \t--required=<arg>  \tRequires 3 floats as argument." },
   { lCOLOR, 0,"c","light color", Arg::Required, "  -c <float>, \t--required=<arg>  \tRequires 3 floats as argument." },
 
   { UNKNOWN, 0,"", "",        Arg::None,
@@ -122,8 +123,9 @@ int main(int argc, char* argv[])
   string sceneName = "";
   vector<string> x;
   float arr[3];
+  Vec3f color = Vec3f(0.f,0.f,0.f), position = Vec3f(0.f,0.f,0.f), orientation = Vec3f(0.f,0.f,0.f);
   string::size_type sz;
-  fprintf(stdout, "cp0 \n");
+
   argc-=(argc>0); argv+=(argc>0); // skip program name argv[0] if present
   option::Stats stats(usage, argc, argv);
 
@@ -174,11 +176,22 @@ int main(int argc, char* argv[])
       case lORIENTATION:
         {
 	    fprintf(stdout, "--light orientation with argument '%s'\n", opt.arg);
+            split(opt.arg, ',', x);
+            for(int i=0; i < x.size(); i++) {
+                arr[i] = stof(x[i], &sz);
+                fprintf(stdout, "options for orientation are %f \n", arr[i]);
+            }
+            orientation = Vec3f(arr[0], arr[1], arr[2]);
         }
         break;
       case lPOSITION:
         {
 	    fprintf(stdout, "--light position with argument '%s'\n", opt.arg);
+            split(opt.arg, ',', x);
+            for(int i=0; i < x.size(); i++) {
+                arr[i] = stof(x[i], &sz);
+            }
+            position = Vec3f(arr[0], arr[1], arr[2]);
         }
         break;
       case lCOLOR:
@@ -187,9 +200,9 @@ int main(int argc, char* argv[])
             split(opt.arg, ',', x);
             for(int i=0; i < x.size(); i++) {
                 arr[i] = stof(x[i], &sz);
-                fprintf(stdout, "options for color are %f \n", arr[i]);
+                //fprintf(stdout, "options for color are %f \n", arr[i]);
             }
-            Vec3f color = Vec3f(arr[0], arr[1], arr[2]);
+            color = Vec3f(arr[0], arr[1], arr[2]);
         }
         break;
       case NUMERIC:
@@ -203,14 +216,26 @@ int main(int argc, char* argv[])
         // which aborts the parse with an error
         break;
     }
+    x.clear(); //remove floats from previous parsing
   }
 
   for (int i = 0; i < parse.nonOptionsCount(); ++i)
     fprintf(stdout, "Non-option argument #%d is %s\n", i, parse.nonOption(i));
 
   /*build the tree */
-  Scene_h scene(1024,1024, 1);
-  scene.LoadObj(sceneName);
-  bvh(scene);
+  //Scene_h scene(1024,1024, 1);
+  //scene.LoadObj(sceneName);
+  //bvh(scene);
 
+  RayTracer rayTracer;
+  rayTracer.LoadObj(sceneName);
+  Light_h hLight;
+  hLight.color = color;
+  hLight.position = position;
+  hLight.orientation = orientation;
+  rayTracer.setHostLight(hLight);
+  
+  rayTracer.setUpDevice();
+  rayTracer.run();
+ 
 }
