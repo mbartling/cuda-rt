@@ -58,6 +58,7 @@ Scene_h& Scene_h::operator = (const Scene_d& deviceScene){
     cudaMalloc(&smallImage, imageWidth*imageHeight*sizeof(Vec3f));
 
     AverageSuperSampling(smallImage, deviceScene.image, imageWidth, imageHeight, superSampling);
+    image.resize(imageWidth*imageHeight);
     
     cudaMemcpy(image.data(), smallImage, imageWidth*imageHeight*sizeof(Vec3f), cudaMemcpyDeviceToHost);
     
