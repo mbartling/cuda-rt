@@ -95,14 +95,14 @@ class BVH_d {
                 mDet = AB * P;
                 if(fabsf(mDet) < RAY_EPSILON ) return false;
 
-                mDetInv = 1/mDet;
+                mDetInv = 1.0f/mDet;
                 Vec3f T = r.getPosition() - a;
                 alpha = T * P * mDetInv;    
-                if(alpha < 0 || alpha > 1) return false;
+                if(alpha < 0.0 || alpha > 1.0) return false;
 
                 Vec3f Q = T ^ AB;
                 beta = rDir * Q * mDetInv;
-                if(beta < 0 || alpha + beta > 1) return false;
+                if(beta < 0.0 || alpha + beta > 1.0) return false;
                 t = AC * Q * mDetInv;
 
                 if(fabsf(t) < RAY_EPSILON) return false; // Jaysus this sucked
@@ -126,12 +126,12 @@ class BVH_d {
 
                 i.object_id = object_id;
                 //if(!parent->materials.empty() && parent->hasVertexMaterials()){
-                Material aM;
                 //TODO Be able to uncomment the following lines
                 int material_id = material_ids[object_id];
-                aM += (1 - (alpha + beta))*(materials[ids.a]); 
-                aM +=                alpha*(materials[ids.b]); 
-                aM +=                beta* (materials[ids.c]); 
+                Material aM = materials[object_id];
+                //aM += (1 - (alpha + beta))*(materials[ids.a]); 
+                //aM +=                alpha*(materials[ids.b]); 
+                //aM +=                beta* (materials[ids.c]); 
 
                 i.material = aM;
 
