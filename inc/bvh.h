@@ -107,6 +107,7 @@ class BVH_d {
 
                 if(fabsf(t) < RAY_EPSILON) return false; // Jaysus this sucked
                 i.bary = Vec3f(1 - (alpha + beta), alpha, beta);
+                printf("t=%f\n", t);
                 i.t = t;
 
 
@@ -128,7 +129,7 @@ class BVH_d {
                 //if(!parent->materials.empty() && parent->hasVertexMaterials()){
                 //TODO Be able to uncomment the following lines
                 int material_id = material_ids[object_id];
-                Material aM = materials[object_id];
+                Material aM = materials[material_id];
                 //aM += (1 - (alpha + beta))*(materials[ids.a]); 
                 //aM +=                alpha*(materials[ids.b]); 
                 //aM +=                beta* (materials[ids.c]); 
@@ -146,6 +147,7 @@ class BVH_d {
                     for(int j = 0; j < numTriangles; j++){
                         if(intersectTriangle(r, cur, object_ids[j])){
                             if(!haveOne || (cur.t < i.t)){
+                                printf("FOUND ONE t=%f\n",cur.t);
                                 i = cur;
                                 haveOne = true;
                             }
