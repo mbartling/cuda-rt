@@ -78,7 +78,7 @@ void split(const std::string &s, char delim, std::vector<std::string> &elems) {
     }
 }
 
- enum  optionIndex { UNKNOWN, HELP, INPUT, NUMERIC, lORIENTATION, lPOSITION, lCOLOR, NONEMPTY, OUTPUT };
+ enum  optionIndex { UNKNOWN, HELP, INPUT, NUMERIC, lORIENTATION, lPOSITION, lCOLOR, NONEMPTY, OUTPUT, WIDTH, HEIGHT};
 const option::Descriptor usage[] = {
   { UNKNOWN, 0,"", "",        Arg::Unknown, "USAGE: example_arg [options]\n\n"
                                             "Options:" },
@@ -92,6 +92,8 @@ const option::Descriptor usage[] = {
   { lORIENTATION, 0,"d","orientation", Arg::Required, "  -d <float,float,float>, \t--orientation=<float,float,float>  \tRequires 3 floats as argument." },
   { lPOSITION, 0,"p","position", Arg::Required, "  -p <float,float,float>, \t--position=<float,float,float>  \tRequires 3 floats as argument." },
   { lCOLOR, 0,"c","color", Arg::Required, "  -c <float,float,float>, \t--color=<float,float,float>  \tRequires 3 floats as argument." },
+  { WIDTH, 0,"w","width", Arg::Numeric, "  -w <int>, \t--color=<int>  \tSet width" },
+  { HEIGHT, 0,"h","height", Arg::Numeric, "  -h <int>, \t--color=<int>  \tSet height" },
   { OUTPUT, 0,"o","output", Arg::Required, "  -o <arg>, \t--output=<arg>  \tOutput file argument required." },
 
   { UNKNOWN, 0,"", "",        Arg::None,
@@ -121,8 +123,9 @@ const option::Descriptor usage[] = {
 
 int main(int argc, char* argv[])
 {
-  string sceneName = "", outputFile = "", mtlFile = "";
+  string sceneName = "", outputFile = "", mtlFile = "", temp = "";
   vector<string> x;
+  int height=0, width=0;
   float arr[3];
   Vec3f color = Vec3f(1.f,1.f,1.f), position = Vec3f(1.f,1.f,1.f), orientation = Vec3f(1.f,1.f,1.f);
   string::size_type sz;
@@ -221,6 +224,18 @@ int main(int argc, char* argv[])
             outputFile = opt.arg;
         }
         break;
+      case WIDTH:
+        {  
+           temp = opt.arg;
+           width = stoi(temp, &sz);
+        }
+        break;
+      case HEIGHT:
+        {
+           temp = opt.arg;
+           height = stoi(temp, &sz);
+        }
+        break;
       case UNKNOWN:
         // not possible because Arg::Unknown returns ARG_ILLEGAL
         // which aborts the parse with an error
@@ -237,7 +252,7 @@ int main(int argc, char* argv[])
   //scene.LoadObj(sceneName);
   //bvh(scene);
 
-  RayTracer rayTracer;
+  RayTracer rayTracer(height, width, 1);
   rayTracer.LoadObj(sceneName, mtlFile);
   Light_h hLight;
   hLight.color = color;
