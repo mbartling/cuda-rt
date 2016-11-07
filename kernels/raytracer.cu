@@ -13,58 +13,79 @@ __global__
 void runRayTracerKernel(Scene_d scene, int depth);
 
 __global__ 
-void runRayTracerKernelRec(Scene_d scene, int depth, Light_h hostLight);
+void runRayTracerKernelRec(Scene_d* scene, int depth);
 
 __device__ 
 Vec3f traceRay(Scene_d* scene, ray& r, int depth);
-
+__global__
+void initLight(Scene_d* scene, Light_h hostLight, Light* light){
+    printf("Adding Light to scene\n");
+    *light = Light(scene, hostLight);
+    scene->light = light;
+}
 void RayTracer::run(){
-    int blockSize = 32;
+    int blockSize = 16;
     dim3 blockDim(blockSize, blockSize); //A thread block is 32x32 pixels
     dim3 gridDim(deviceScene.imageWidth/blockDim.x, deviceScene.imageHeight/blockDim.y);
     int stackDepth = ( 1 << depth) - 1;
     //runRayTracerKernel<<<gridDim, blockDim, stackDepth*sizeof(RayStack)>>>(deviceScene, depth);
-    runRayTracerKernelRec<<<gridDim, blockDim>>>(deviceScene, depth, hostLight);
+    Scene_d* scene;
+    Light* light;
+    cudaMalloc(&scene, sizeof(Scene_d));
+    cudaMalloc(&light, sizeof(Light));
+    cudaMemcpy(scene, &deviceScene, sizeof(Scene_d), cudaMemcpyHostToDevice);
+
+    initLight<<<1,1>>>(scene, hostLight, light);
+    printf("\nABOUT TO RUN KERNEL\n");
+    cudaDeviceSynchronize();
+    size_t stackSize;
+    cudaDeviceSetLimit(cudaLimitStackSize, 1 << 16);
+    cudaDeviceGetLimit(&stackSize, cudaLimitStackSize);
+    printf("Stack size is %d\n", stackSize);
+    runRayTracerKernelRec<<<gridDim, blockDim>>>(scene, depth);
+    cudaDeviceSynchronize();
+    printf("Fuck THAT\n");
+    cudaFree(scene);
+    cudaFree(light);
 }
 
 __global__
-void runRayTracerKernelRec(Scene_d scene, int depth, Light_h hostLight){
+void runRayTracerKernelRec(Scene_d* scene, int depth){
 
     int px = blockIdx.x * blockDim.x + threadIdx.x;
     int py = blockIdx.y * blockDim.y + threadIdx.y;
-    int idx = py*scene.imageWidth + px;
+    int idx = py*scene->imageWidth + px;
 
-    float x = float(px)/float(scene.imageWidth);
-    float y = float(py)/float(scene.imageHeight);
+    float x = float(px)/float(scene->imageWidth);
+    float y = float(py)/float(scene->imageHeight);
 
     //Get view from the camera
     //perturb
     //x += randx; //in [0,1]
     //y += randy; //in [0,1]
     ray r;
-    scene.camera.rayThrough(x, y, r);
+    scene->camera.rayThrough(x, y, r);
     //printf("RAY %d, p=(%f,%f,%f), d=(%f,%f,%f)\n", idx, r.p.x, r.p.y, r.p.z, r.d.x, r.d.y, r.d.z);
     Vec3f colorC;
-    Light light(&scene, hostLight);
-    scene.light = &light;
-    colorC = traceRay(&scene, r, depth);
+    printf("Attempting to trace ray\n");
+    colorC = traceRay(scene, r, depth);
 
-    scene.image[idx] = colorC;
+    scene->image[idx] = colorC;
 
 }
 
 __device__ 
 Vec3f traceRay(Scene_d* scene, ray& r, int depth){
-    isect i;
+    isect* i = new isect();
     Vec3f colorC;
 
     // std::default_random_engine generator;
     // std::normal_distribution<float> distribution(0.0,0.01);
-    if(scene->intersect(r, i)) {
+    if(scene->intersect(r, *i)) {
         // YOUR CODE HERE
-        Vec3f q = r.at(i.t);
+        Vec3f q = r.at(i->t);
         
-        printf("q=(%f,%f,%f)\n", q.x, q.y, q.z);
+        //printf("q=(%f,%f,%f)\n", q.x, q.y, q.z);
         // An intersection occurred!  We've got work to do.  For now,
         // this code gets the material for the surface that was intersected,
         // and asks that material to provide a color for the ray.  
@@ -73,9 +94,14 @@ Vec3f traceRay(Scene_d* scene, ray& r, int depth){
         // Instead of just returning the result of shade(), add some
         // more steps: add in the contributions from reflected and refracted
         // rays.
-        const Material& m = i.material;	  
-        colorC = m.shade(scene, r, i);
-        if(depth <= 0) return colorC;
+        const Material* m = &scene->materials[scene->material_ids[i->object_id]]; //i->material;	  
+        colorC = m->shade(scene, r, *i);
+        printf("colorC=(%f,%f,%f)\n", colorC.x, colorC.y, colorC.z);
+        if(depth <= 0){
+            delete i;
+            return colorC;
+        }
+/*
         if(m.Refl()){
             // std::cout<< "HERE"<< std::endl;
 
@@ -85,7 +111,6 @@ Vec3f traceRay(Scene_d* scene, ray& r, int depth){
             ray R(q, Rdir);
             colorC += m.kr % traceRay(scene, R, depth - 1);
         }
-/*
         // Now handle the Transmission (Refraction)
         if(m.Trans()){
 
@@ -125,6 +150,7 @@ Vec3f traceRay(Scene_d* scene, ray& r, int depth){
         // is just black.
         colorC = Vec3f(0.0, 0.0, 0.0);
     }
+    delete i;
     return colorC;
 
 }
@@ -147,7 +173,7 @@ void runRayTracerKernel(Scene_d scene, int depth){
     //y += randy; //in [0,1]
     //scene.camera.rayThrough(x, y, stackPtr->r);
 
-
+/*
     while(true){
         ray& r = stackPtr->r;
         isect& i = stackPtr->i;
@@ -252,4 +278,5 @@ void runRayTracerKernel(Scene_d scene, int depth){
     }
 
     scene.image[idx] = rayStack[0].colorC;
+    */
 }
