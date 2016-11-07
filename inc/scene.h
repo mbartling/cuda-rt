@@ -34,6 +34,7 @@ class Scene_h{
         vector<TriangleIndices> t_indices;
         vector<int> material_ids;
         vector<Material> materials;
+        Camera* camera;
 
         int imageWidth;
         int imageHeight;
@@ -50,7 +51,7 @@ class Scene_h{
         vector<Vec3f> getImage() const {return image;}
 
         Scene_h& operator = (const Scene_d& deviceScene); //Copy image from the device
-
+        void setCamera(Camera* _camera){camera = _camera; }
 
 };
 

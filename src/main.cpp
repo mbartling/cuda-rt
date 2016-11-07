@@ -260,8 +260,10 @@ int main(int argc, char* argv[])
   hLight.color = color;
   hLight.position = position;
   hLight.orientation = orientation;
+  Camera camera;
+
   rayTracer.setHostLight(hLight);
-  
+  rayTracer.setCamera(&camera); 
   rayTracer.setUpDevice();
   rayTracer.run();
   rayTracer.pullRaytracedImage();

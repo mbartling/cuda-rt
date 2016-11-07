@@ -43,6 +43,7 @@ class RayTracer{
         }
 
         void LoadObj(string filename, string mtl_basepath){ hostScene.LoadObj(filename, mtl_basepath); }
+        void setCamera(Camera* _camera) {hostScene.setCamera( _camera);}
         void setUpDevice(){ deviceScene = hostScene; }
         void setHostLight(const Light_h& mLight) { 
             hostLight = mLight; 
