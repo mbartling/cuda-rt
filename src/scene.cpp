@@ -84,6 +84,7 @@ Scene_d& Scene_d::operator = (const Scene_h& hostScene){
     cudaMalloc(&material_ids, numTriangles*sizeof(int));
 
     cudaMalloc(&image, imageWidth*imageHeight*sizeof(Vec3f));
+    cudaMalloc(&camera, sizeof(Camera));
 
     //Copy stuff
     cudaMemcpy(vertices, hostScene.mAttributes.vertices.data(), numVertices*sizeof(Vec3f), cudaMemcpyHostToDevice);
@@ -91,6 +92,7 @@ Scene_d& Scene_d::operator = (const Scene_h& hostScene){
     cudaMemcpy(t_indices, hostScene.t_indices.data(), numTriangles*sizeof(TriangleIndices), cudaMemcpyHostToDevice);
     cudaMemcpy(material_ids, hostScene.material_ids.data(), numTriangles*sizeof(int), cudaMemcpyHostToDevice);
     cudaMemcpy(materials, hostScene.materials.data(), numMaterials*sizeof(Material), cudaMemcpyHostToDevice);
+    cudaMemcpy(camera, hostScene.camera, sizeof(Camera), cudaMemcpyHostToDevice);
 
     computeBoundingBoxes();
     

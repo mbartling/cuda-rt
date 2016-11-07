@@ -64,7 +64,7 @@ void runRayTracerKernelRec(Scene_d* scene, int depth){
     //x += randx; //in [0,1]
     //y += randy; //in [0,1]
     ray r;
-    scene->camera.rayThrough(x, y, r);
+    scene->getCamera()->rayThrough(x, y, r);
     //printf("RAY %d, p=(%f,%f,%f), d=(%f,%f,%f)\n", idx, r.p.x, r.p.y, r.p.z, r.d.x, r.d.y, r.d.z);
     Vec3f colorC;
     printf("Attempting to trace ray\n");
