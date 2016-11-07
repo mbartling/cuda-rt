@@ -4,14 +4,16 @@ __device__
 Vec3f Light::shadowAttenuation(const ray& r, const Vec3f& pos){
 #if DIRECTIONAL_LIGHT
     ray R = r;
-    isect i;
-    if (scene->intersect(R,i)) { // We are occluded
+    isect* i = new isect();
+    if (scene->intersect(R,*i)) { // We are occluded
 
-        const Material& m = i.getMaterial();
-        if(i.t < RAY_EPSILON) return Vec3f(1,1,1);
-        if (m.Trans()){return m.kd % (Vec3f(1,1,1) - m.kt);}
-        else return Vec3f(0,0,0);
+        //const Material* m = i.getMaterial();
+        const Material* m = &scene->materials[scene->material_ids[i->object_id]]; //i->material;	  
+        if(i->t < RAY_EPSILON){ delete i; return Vec3f(1,1,1);}
+        if (m->Trans()){delete i; return m->kd % (Vec3f(1,1,1) - m->kt);}
+        else{ delete i; return Vec3f(0,0,0); }
     }else{
+        delete i;
         return Vec3f(1,1,1);
     }
 #endif
