@@ -24,7 +24,7 @@ void initLight(Scene_d* scene, Light_h hostLight, Light* light){
     scene->light = light;
 }
 void RayTracer::run(){
-    int blockSize = 32;
+    int blockSize = 16;
     dim3 blockDim(blockSize, blockSize); //A thread block is 32x32 pixels
     dim3 gridDim(deviceScene.imageWidth/blockDim.x, deviceScene.imageHeight/blockDim.y);
     int stackDepth = ( 1 << depth) - 1;
@@ -85,7 +85,7 @@ Vec3f traceRay(Scene_d* scene, ray& r, int depth){
         // YOUR CODE HERE
         Vec3f q = r.at(i->t);
         
-        printf("q=(%f,%f,%f)\n", q.x, q.y, q.z);
+        //printf("q=(%f,%f,%f)\n", q.x, q.y, q.z);
         // An intersection occurred!  We've got work to do.  For now,
         // this code gets the material for the surface that was intersected,
         // and asks that material to provide a color for the ray.  
@@ -96,6 +96,7 @@ Vec3f traceRay(Scene_d* scene, ray& r, int depth){
         // rays.
         const Material* m = &scene->materials[scene->material_ids[i->object_id]]; //i->material;	  
         colorC = m->shade(scene, r, *i);
+        printf("colorC=(%f,%f,%f)\n", colorC.x, colorC.y, colorC.z);
         if(depth <= 0){
             delete i;
             return colorC;

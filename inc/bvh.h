@@ -106,7 +106,7 @@ class BVH_d {
 
                 if(fabsf(t) < RAY_EPSILON) return false; // Jaysus this sucked
                 i.bary = Vec3f(1 - (alpha + beta), alpha, beta);
-                printf("t=%f\n", t);
+                //printf("t=%f\n", t);
                 i.t = t;
 
 
@@ -136,11 +136,11 @@ class BVH_d {
                 bool intersect(const ray& r, isect& i){
                     bool haveOne = false;
                     isect* cur = new isect();
-                    printf("HERE\n");
+                    //printf("HERE\n");
                     for(int j = 0; j < numTriangles; j++){
                         if(intersectTriangle(r, *cur, object_ids[j])){
                             if(!haveOne || (cur->t < i.t)){
-                                printf("FOUND ONE t=%f\n",cur->t);
+                                //printf("FOUND ONE t=%f\n",cur->t);
                                 i = *cur;
                                 haveOne = true;
                             }
@@ -148,6 +148,7 @@ class BVH_d {
                     }
                 if(!haveOne) i.t = 1000.0;
                 delete cur;
+                //printf("Closest is %d, %f\n", i.object_id, i.t);
                 return haveOne;
 
                 }

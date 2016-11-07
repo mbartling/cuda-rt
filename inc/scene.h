@@ -91,7 +91,7 @@ class Scene_d{
 
         __device__
         bool intersect(const ray& r, isect& i){ //Find the closest point of intersection
-            printf("in SCENE INTERSECT\n");
+            //printf("in SCENE INTERSECT\n");
             return bvh.intersect(r, i);
         }
 
