@@ -55,16 +55,39 @@ void runRayTracerKernelRec(Scene_d* scene, int depth){
     int px = blockIdx.x * blockDim.x + threadIdx.x;
     int py = blockIdx.y * blockDim.y + threadIdx.y;
     int idx = py*scene->imageWidth + px;
-
-    float x = float(px)/float(scene->imageWidth);
-    float y = float(py)/float(scene->imageHeight);
+    /*
+       unsigned width = 640, height = 480; 
+       Vec3f *image = new Vec3f[width * height], *pixel = image; 
+       float invWidth = 1 / float(width), invHeight = 1 / float(height); 
+       float fov = 30, aspectratio = width / float(height); 
+       float angle = tan(M_PI * 0.5 * fov / 180.); 
+    // Trace rays
+    for (unsigned y = 0; y < height; ++y) { 
+    for (unsigned x = 0; x < width; ++x, ++pixel) { 
+    float xx = (2 * ((x + 0.5) * invWidth) - 1) * angle * aspectratio; 
+    float yy = (1 - 2 * ((y + 0.5) * invHeight)) * angle; 
+    Vec3f raydir(xx, yy, -1); 
+    raydir.normalize(); 
+     *pixel = trace(Vec3f(0), raydir, spheres, 0); 
+    //                                                                                 } 
+    //                                                                                     } i
+    */
+    //           float x = float(px)/float(scene->imageWidth);
+    //           float y = float(py)/float(scene->imageHeight);
 
     //Get view from the camera
     //perturb
     //x += randx; //in [0,1]
     //y += randy; //in [0,1]
-    ray r;
-    scene->getCamera()->rayThrough(x, y, r);
+    //           ray r;
+    //           scene->getCamera()->rayThrough(x, y, r);
+    float invWidth = 1.0 / float(scene->imageWidth), invHeight = 1.0 / float(scene->imageHeight);
+    float fov = 30, aspectratio = float(scene->imageWidth) / float(scene->imageHeight);
+    float angle = tan(M_PI * 0.5 * fov / 180.0f);
+    float xx = (2 * ((px + 0.5) * invWidth) - 1)*angle*aspectratio;
+    float yy = (1 - 2 * ((py + 0.5) * invHeight)) * angle;
+    ray r(Vec3f(0.0,0.0,0.0), Vec3f(xx, yy, -1));
+    normalize(r.d);
     printf("RAY %d, p=(%f,%f,%f), d=(%f,%f,%f)\n", idx, r.p.x, r.p.y, r.p.z, r.d.x, r.d.y, r.d.z);
     Vec3f colorC;
     //printf("Attempting to trace ray\n");
@@ -84,7 +107,7 @@ Vec3f traceRay(Scene_d* scene, ray& r, int depth){
     if(scene->intersect(r, *i)) {
         // YOUR CODE HERE
         Vec3f q = r.at(i->t);
-        
+
         //printf("q=(%f,%f,%f)\n", q.x, q.y, q.z);
         // An intersection occurred!  We've got work to do.  For now,
         // this code gets the material for the surface that was intersected,
@@ -96,50 +119,50 @@ Vec3f traceRay(Scene_d* scene, ray& r, int depth){
         // rays.
         const Material* m = &scene->materials[scene->material_ids[i->object_id]]; //i->material;	  
         colorC = m->shade(scene, r, *i);
-//        printf("colorC=(%f,%f,%f)\n", colorC.x, colorC.y, colorC.z);
+        //        printf("colorC=(%f,%f,%f)\n", colorC.x, colorC.y, colorC.z);
         if(depth <= 0){
             delete i;
             return colorC;
         }
-/*
-        if(m.Refl()){
-            // std::cout<< "HERE"<< std::endl;
+        /*
+           if(m.Refl()){
+        // std::cout<< "HERE"<< std::endl;
 
-            Vec3f Rdir = -2.0*(r.getDirection()*i.N)*i.N + r.getDirection();
-            normalize(Rdir);
-            
-            ray R(q, Rdir);
-            colorC += m.kr % traceRay(scene, R, depth - 1);
+        Vec3f Rdir = -2.0*(r.getDirection()*i.N)*i.N + r.getDirection();
+        normalize(Rdir);
+
+        ray R(q, Rdir);
+        colorC += m.kr % traceRay(scene, R, depth - 1);
         }
         // Now handle the Transmission (Refraction)
         if(m.Trans()){
 
 
-            Vec3f n = i.N;
-            Vec3f rd = r.getDirection();
-            Vec3f rcos = n*(-rd*n);
-            Vec3f rsin = rcos + rd;
-            float etai = 1.0;
-            float etat = m.ior;
-            Vec3f tcos, tsin;
-            float eta;
-            if(rd*n < 0){
-                eta = etai/etat;
-                n = -n;
-            } else{
-                eta = etat/etai;
-            }
-            tsin = eta*rsin;
-            float TIR = 1 - tsin*tsin;
-            if(TIR >= 0){
-                tcos = n*sqrt(TIR);
-                Vec3f Tdir = tcos + tsin;
-                normalize(Tdir);
+        Vec3f n = i.N;
+        Vec3f rd = r.getDirection();
+        Vec3f rcos = n*(-rd*n);
+        Vec3f rsin = rcos + rd;
+        float etai = 1.0;
+        float etat = m.ior;
+        Vec3f tcos, tsin;
+        float eta;
+        if(rd*n < 0){
+        eta = etai/etat;
+        n = -n;
+        } else{
+        eta = etat/etai;
+        }
+        tsin = eta*rsin;
+        float TIR = 1 - tsin*tsin;
+        if(TIR >= 0){
+        tcos = n*sqrt(TIR);
+        Vec3f Tdir = tcos + tsin;
+        normalize(Tdir);
 
-                ray T(q, Tdir);
-                colorC += m.kt % traceRay(scene, T, depth - 1);
+        ray T(q, Tdir);
+        colorC += m.kt % traceRay(scene, T, depth - 1);
 
-            }
+        }
 
         }
         */
@@ -173,110 +196,110 @@ void runRayTracerKernel(Scene_d scene, int depth){
     //y += randy; //in [0,1]
     //scene.camera.rayThrough(x, y, stackPtr->r);
 
-/*
-    while(true){
-        ray& r = stackPtr->r;
-        isect& i = stackPtr->i;
-        Vec3f& colorC = stackPtr->colorC;
-        int& state = stackPtr->state;
+    /*
+       while(true){
+       ray& r = stackPtr->r;
+       isect& i = stackPtr->i;
+       Vec3f& colorC = stackPtr->colorC;
+       int& state = stackPtr->state;
 
-        if(state == 0) //Check for intersection
-        {
-            if(scene.intersect(r, i)){
-                Vec3f q = r.at(i.t);
-                colorC = i.material.shade(&scene, r, i);
-                if(curDepth >= depth){state = 5;} //Exit
-                else
-                    state = 1;
-            }else{
-                colorC = Vec3f(0.0,0.0,0.0);
-            }
-        }
-        if(state == 1) //Check for reflection
-        {
-            if(!i.material.Refl())
-                state = 3;
-            else{
-                Vec3f Rdir = -2.0*(r.getDirection()*i.N)*i.N + r.getDirection();
-                normalize(Rdir);
+       if(state == 0) //Check for intersection
+       {
+       if(scene.intersect(r, i)){
+       Vec3f q = r.at(i.t);
+       colorC = i.material.shade(&scene, r, i);
+       if(curDepth >= depth){state = 5;} //Exit
+       else
+       state = 1;
+       }else{
+       colorC = Vec3f(0.0,0.0,0.0);
+       }
+       }
+       if(state == 1) //Check for reflection
+       {
+       if(!i.material.Refl())
+       state = 3;
+       else{
+       Vec3f Rdir = -2.0*(r.getDirection()*i.N)*i.N + r.getDirection();
+       normalize(Rdir);
 
-                //Put DRT stuff HERE
+    //Put DRT stuff HERE
 
-                state = 2; //Select next state for my stack frame return
-                Vec3f q = r.at(i.t);
+    state = 2; //Select next state for my stack frame return
+    Vec3f q = r.at(i.t);
 
-                //Push
-                stackPtr++;
-                curDepth++;
+    //Push
+    stackPtr++;
+    curDepth++;
 
-                stackPtr->r = ray(q, Rdir);
-                stackPtr->state = 0;
-                continue; //Handle the stack push
-            }
-        }
-        if(state == 2) //Post reflection
-        {
-            colorC += i.material.kr % (stackPtr+1)->colorC;
-            state = 3;
-        }
-        if(state == 3) //Check for refraction
-        {
-            if(!i.material.Trans())
-                state = 5; // Done
-            else{
-                Vec3f n = i.N;
-                Vec3f rd = r.getDirection();
-                Vec3f rcos = n*(-rd*n);
-                Vec3f rsin = rcos + rd;
-                float etai = 1.0;
-                float etat = i.material.ior;
-                Vec3f tcos, tsin;
-                float eta;
-                if(rd*n < 0){
-                    eta = etai/etat;
-                    n = -n;
-                } else{
-                    eta = etat/etai;
-                }
-                tsin = eta*rsin;
-                float TIR = 1 - tsin*tsin;
-                if(TIR >= 0){
-                    tcos = n*sqrt(TIR);
-                    Vec3f Tdir = tcos + tsin;
-                    Vec3f q = r.at(i.t);
-                    normalize(Tdir);
+    stackPtr->r = ray(q, Rdir);
+    stackPtr->state = 0;
+    continue; //Handle the stack push
+    }
+    }
+    if(state == 2) //Post reflection
+    {
+    colorC += i.material.kr % (stackPtr+1)->colorC;
+    state = 3;
+    }
+    if(state == 3) //Check for refraction
+    {
+    if(!i.material.Trans())
+    state = 5; // Done
+    else{
+    Vec3f n = i.N;
+    Vec3f rd = r.getDirection();
+    Vec3f rcos = n*(-rd*n);
+    Vec3f rsin = rcos + rd;
+    float etai = 1.0;
+    float etat = i.material.ior;
+    Vec3f tcos, tsin;
+    float eta;
+    if(rd*n < 0){
+    eta = etai/etat;
+    n = -n;
+    } else{
+    eta = etat/etai;
+    }
+    tsin = eta*rsin;
+    float TIR = 1 - tsin*tsin;
+    if(TIR >= 0){
+    tcos = n*sqrt(TIR);
+    Vec3f Tdir = tcos + tsin;
+    Vec3f q = r.at(i.t);
+    normalize(Tdir);
 
-                    //Put DRT stuff HERE
+    //Put DRT stuff HERE
 
-                    //Recusive part
-                    state = 4;
+    //Recusive part
+    state = 4;
 
-                    //Push
-                    stackPtr++;
-                    curDepth++;
+    //Push
+    stackPtr++;
+    curDepth++;
 
-                    stackPtr->r = ray(q, Tdir);
-                    stackPtr->state = 0;
-                    continue; //Handle the stack push
-                }
-            }
-        }
-        if(state == 4) //Post refraction
-        {
+    stackPtr->r = ray(q, Tdir);
+    stackPtr->state = 0;
+    continue; //Handle the stack push
+}
+}
+}
+if(state == 4) //Post refraction
+{
 
-            colorC += i.material.kt % (stackPtr+1)->colorC;
-            state = 5;
-        }
-        // There is no state 5 on purpose
-        if(curDepth == 0) //Hit nothing and am at root of stack
-            break;
-        else{
-            stackPtr--; //Pop
-            curDepth--;
-        }
-
+    colorC += i.material.kt % (stackPtr+1)->colorC;
+    state = 5;
+}
+// There is no state 5 on purpose
+if(curDepth == 0) //Hit nothing and am at root of stack
+    break;
+    else{
+        stackPtr--; //Pop
+        curDepth--;
     }
 
-    scene.image[idx] = rayStack[0].colorC;
-    */
+}
+
+scene.image[idx] = rayStack[0].colorC;
+*/
 }

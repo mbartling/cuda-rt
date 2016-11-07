@@ -107,6 +107,7 @@ class BVH_d {
                 if(fabsf(t) < RAY_EPSILON) return false; // Jaysus this sucked
                 i.bary = Vec3f(1 - (alpha + beta), alpha, beta);
                 //printf("t=%f\n", t);
+                if( t < 0.0 ) return false;
                 i.t = t;
 
 
