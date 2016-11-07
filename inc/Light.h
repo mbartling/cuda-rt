@@ -24,6 +24,8 @@ struct Light_h{
     float quadraticTerm;    // c
 
 
+    __host__ __device__
+    Light_h(): color(1.0, 1.0, 1.0), position(1.0,1.0,1.0), orientation(.5, -1, -1), width(1) {} 
 };
 // Currently a Directional Light
 class Light {
@@ -67,9 +69,13 @@ class Light {
             Light(Scene_d* scene, const Light_h& light): scene(scene) {
                 color       = light.color       ;
                 position    = light.position    ;
+                //position    = Vec3f(1.0,1.0,1.0)    ;
                 orientation = light.orientation ;
                 width       = light.width       ;
                 height      = light.height      ;
+                constantTerm = 0.0;
+                linearTerm = 0.01;
+                quadraticTerm = 0.001;
 
             }
 

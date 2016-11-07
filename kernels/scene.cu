@@ -65,6 +65,7 @@ void AverageSuperSampling(Vec3f* smallImage,
     dim3 blockDim(blockSize, blockSize); //A thread block is 32x32 pixels
     dim3 gridDim(imageWidth/blockDim.x, imageHeight/blockDim.y);
     AverageSuperSamplingKernel<<<gridDim, blockDim>>>(smallImage, deviceImage, imageWidth, imageHeight, superSampling);
+    cudaDeviceSynchronize();
 }
 
 void Scene_d::findMinMax(Vec3f& mMin, Vec3f& mMax){
@@ -131,6 +132,12 @@ void AverageSuperSamplingKernel(Vec3f* smallImage, Vec3f* deviceImage, int image
     int pixelIdx = pixelY*imageWidth + pixelX;
     
     Vec3f mSum;
+    if (superSampling == 1){
+        mSum = deviceImage[pixelIdx];
+        clamp(mSum);
+        smallImage[pixelIdx] = mSum;
+        return;
+    }
     for(int i = 0; i < superSampling; i++){
          for(int j = 0; j < superSampling; j++){
             int idxX = pixelX*superSampling + j;

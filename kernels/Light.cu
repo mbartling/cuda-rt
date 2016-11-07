@@ -4,6 +4,7 @@ __device__
 Vec3f Light::shadowAttenuation(const ray& r, const Vec3f& pos){
 #if POSITIONAL_LIGHT
     ray R = r;
+    //R.p += RAY_EPSILON*R.d;
         //if(traceUI->isDistributionRayTracing()){
         //   Vec3f mDir = R.getDirection();
         //   Vec3f perterbT = CosWeightedRandomHemiDir2(mDir);
@@ -13,7 +14,7 @@ Vec3f Light::shadowAttenuation(const ray& r, const Vec3f& pos){
 
         isect* i = new isect();
     if(scene->intersect(R, *i)) { //We are potentially occluded
-        if (i->t < length(position - p)){
+        if (i->t < norm(position - pos)){
             const Material* m = &scene->materials[scene->material_ids[i->object_id]]; //i->material;	  
             if(i->t < RAY_EPSILON){ delete i; return Vec3f(1,1,1);}
 
@@ -55,7 +56,7 @@ float Light::distanceAttenuation(const Vec3f& p){
     // You'll need to modify this method to attenuate the intensity 
     // of the light based on the distance between the source and the 
     // point P.  For now, we assume no attenuation and just return 1.0
-    float d = length(p - pos);
+    float d = norm(position - p);
     float falloff = constantTerm + (linearTerm + quadraticTerm*d)*d;
     falloff = (fabs(falloff) < RAY_EPSILON) ? 1.0 : 1.0 / falloff;
     return fmin( 1.0, falloff );

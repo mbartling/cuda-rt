@@ -103,7 +103,7 @@ class Scene_d{
         Camera* getCamera() { return camera; }
 
         __device__
-        Vec3f ambient() const {return Vec3f(0,0,0);}
+        Vec3f ambient() const {return Vec3f(0.0,0.0,0.0);}
 
         ~Scene_d();
 

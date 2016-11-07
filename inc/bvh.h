@@ -104,6 +104,7 @@ class BVH_d {
                 if(beta < 0.0 || alpha + beta > 1.0) return false;
                 t = AC * Q * mDetInv;
 
+                //if( t < RAY_EPSILON ) return false;
                 if(fabsf(t) < RAY_EPSILON) return false; // Jaysus this sucked
                 i.bary = Vec3f(1 - (alpha + beta), alpha, beta);
                 //printf("t=%f\n", t);
@@ -114,7 +115,7 @@ class BVH_d {
                 // std::cout << traceUI->smShadSw() << std::endl; 
                 // if(traceUI->smShadSw() && !parent->floatCheck()){
                 //Smooth Shading
-                i.N = (1 - (alpha + beta))*normals[ids->a.normal_index] + \
+                i.N = (1.0 - (alpha + beta))*normals[ids->a.normal_index] + \
                       alpha*normals[ids->b.normal_index] + \
                       beta*normals[ids->c.normal_index];
 
@@ -123,11 +124,6 @@ class BVH_d {
                 normalize(i.N);
 
                 i.object_id = object_id;
-                //if(!parent->materials.empty() && parent->hasVertexMaterials()){
-                //TODO Be able to uncomment the following lines
-                //int material_id = material_ids[object_id];
-                //Material aM = materials[material_id];
-                //i.material = aM;
 
                 return true;
 

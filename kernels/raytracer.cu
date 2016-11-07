@@ -172,7 +172,8 @@ Vec3f traceRay(Scene_d* scene, ray& r, int depth){
         // No intersection.  This ray travels to infinity, so we color
         // it according to the background color, which in this (simple) case
         // is just black.
-        colorC = Vec3f(0.0, 0.0, 0.0);
+        //colorC = Vec3f(0.0, 0.0, 0.0);
+        colorC = Vec3f(0.9, 0.9, 0.9);
     }
     delete i;
     return colorC;
