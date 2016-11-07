@@ -78,21 +78,23 @@ void split(const std::string &s, char delim, std::vector<std::string> &elems) {
     }
 }
 
- enum  optionIndex { UNKNOWN, HELP, INPUT, NUMERIC,lORIENTATION, lPOSITION, lCOLOR, NONEMPTY, OUTPUT };
+ enum  optionIndex { UNKNOWN, HELP, INPUT, NUMERIC, lORIENTATION, lPOSITION, lCOLOR, NONEMPTY, OUTPUT, WIDTH, HEIGHT};
 const option::Descriptor usage[] = {
   { UNKNOWN, 0,"", "",        Arg::Unknown, "USAGE: example_arg [options]\n\n"
                                             "Options:" },
   { HELP,    0,"", "help",    Arg::None,    "  \t--help  \tPrint usage and exit." },
   //{ OPTIONAL,0,"o","optional",Arg::Optional,"  -o[<arg>], \t--optional[=<arg>]"
   //                                          "  \tTakes an argument but is happy without one." },
-  { INPUT,0,"i","required",Arg::Required,"  -i <arg>, \t--required=<arg>  \tMust have an argument." },
+  { INPUT,0,"i","input",Arg::Required,"  -i <arg>, \t--input=<arg>  \tInput file required." },
   { NUMERIC, 0,"n","numeric", Arg::Numeric, "  -n <num>, \t--numeric=<num>  \tRequires a number as argument." },
   { NONEMPTY,0,"1","nonempty",Arg::NonEmpty,"  -1 <arg>, \t--nonempty=<arg>"
                                             "  \tCan NOT take the empty string as argument." },
-  { lORIENTATION, 0,"d","light orientation", Arg::Required, "  -d <float>, \t--required=<arg>  \tRequires 3 floats as argument." },
-  { lPOSITION, 0,"p","light position", Arg::Required, "  -p <float>, \t--required=<arg>  \tRequires 3 floats as argument." },
-  { lCOLOR, 0,"c","light color", Arg::Required, "  -c <float>, \t--required=<arg>  \tRequires 3 floats as argument." },
-  { OUTPUT, 0,"o","Output File Name", Arg::Required, "  -o <arg>, \t--required=<arg>  \tRequires an argument." },
+  { lORIENTATION, 0,"d","orientation", Arg::Required, "  -d <float,float,float>, \t--orientation=<float,float,float>  \tRequires 3 floats as argument." },
+  { lPOSITION, 0,"p","position", Arg::Required, "  -p <float,float,float>, \t--position=<float,float,float>  \tRequires 3 floats as argument." },
+  { lCOLOR, 0,"c","color", Arg::Required, "  -c <float,float,float>, \t--color=<float,float,float>  \tRequires 3 floats as argument." },
+  { WIDTH, 0,"w","width", Arg::Numeric, "  -w <int>, \t--color=<int>  \tSet width" },
+  { HEIGHT, 0,"h","height", Arg::Numeric, "  -h <int>, \t--color=<int>  \tSet height" },
+  { OUTPUT, 0,"o","output", Arg::Required, "  -o <arg>, \t--output=<arg>  \tOutput file argument required." },
 
   { UNKNOWN, 0,"", "",        Arg::None,
    "\nExamples:\n"
@@ -121,8 +123,9 @@ const option::Descriptor usage[] = {
 
 int main(int argc, char* argv[])
 {
-  string sceneName = "", outputFile = "", mtlFile = "";
+  string sceneName = "", outputFile = "", mtlFile = "", temp = "";
   vector<string> x;
+  int height=512, width=512;
   float arr[3];
   Vec3f color = Vec3f(1.f,1.f,1.f), position = Vec3f(1.f,1.f,1.f), orientation = Vec3f(1.f,1.f,1.f);
   string::size_type sz;
@@ -221,6 +224,20 @@ int main(int argc, char* argv[])
             outputFile = opt.arg;
         }
         break;
+      case WIDTH:
+        {  
+           fprintf(stdout, "--width with argument '%s'\n", opt.arg);
+           temp = opt.arg;
+           width = stoi(temp, &sz);
+        }
+        break;
+      case HEIGHT:
+        {
+           fprintf(stdout, "--height with argument '%s'\n", opt.arg);
+           temp = opt.arg;
+           height = stoi(temp, &sz);
+        }
+        break;
       case UNKNOWN:
         // not possible because Arg::Unknown returns ARG_ILLEGAL
         // which aborts the parse with an error
@@ -237,14 +254,16 @@ int main(int argc, char* argv[])
   //scene.LoadObj(sceneName);
   //bvh(scene);
 
-  RayTracer rayTracer;
+  RayTracer rayTracer(height, width, 1);
   rayTracer.LoadObj(sceneName, mtlFile);
   Light_h hLight;
   hLight.color = color;
   hLight.position = position;
   hLight.orientation = orientation;
+  Camera camera;
+
   rayTracer.setHostLight(hLight);
-  
+  rayTracer.setCamera(&camera); 
   rayTracer.setUpDevice();
   rayTracer.run();
   rayTracer.pullRaytracedImage();

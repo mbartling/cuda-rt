@@ -49,12 +49,12 @@ class BVH_d {
         BoundingBox* BBoxs;
         TriangleIndices* t_indices;
         Material* materials;
-        
+        int* material_ids;       
 
 
     public:
 
-        void setUp(Vec3f* mvertices, Vec3f* mnormals, BoundingBox* mBBoxs, TriangleIndices* mt_indices, int mnumTriangles, Material* mmaterials, Vec3f mMin , Vec3f mMax);
+        void setUp(Vec3f* mvertices, Vec3f* mnormals, BoundingBox* mBBoxs, TriangleIndices* mt_indices, int mnumTriangles, Material* mmaterials, Vec3f mMin , Vec3f mMax, int* mmaterial_ids);
         ~BVH_d();
         void computeMortonCodes(Vec3f& mMin, Vec3f& mMax); //Also Generates the objectIds
         void sortMortonCodes();
@@ -65,11 +65,11 @@ class BVH_d {
         __device__
             bool intersectTriangle(const ray& r, isect&  i, int object_id){
 
-                TriangleIndices ids = t_indices[object_id];
+                const TriangleIndices* ids = &t_indices[object_id];
 
-                Vec3f a = vertices[ids.a.vertex_index];
-                Vec3f b = vertices[ids.b.vertex_index];
-                Vec3f c = vertices[ids.c.vertex_index];
+                const Vec3f* a = &vertices[ids->a.vertex_index];
+                const Vec3f* b = &vertices[ids->b.vertex_index];
+                const Vec3f* c = &vertices[ids->c.vertex_index];
 
                 /*
                    -DxAO = AOxD
@@ -84,41 +84,38 @@ class BVH_d {
                 float alpha;
                 float beta;
                 float t;
-                Vec3f rDir = r.getDirection();
                 //Moller-Trombore approach is a change of coordinates into a local uv space
                 // local to the triangle
-                Vec3f AB = b - a;
-                Vec3f AC = c - a;
+                Vec3f AB = *b - *a;
+                Vec3f AC = *c - *a;
 
                 // if (normal * -r.getDirection() < 0) return false;
-                Vec3f P = rDir ^ AC;
+                Vec3f P = r.getDirection() ^ AC;
                 mDet = AB * P;
                 if(fabsf(mDet) < RAY_EPSILON ) return false;
 
-                mDetInv = 1/mDet;
-                Vec3f T = r.getPosition() - a;
+                mDetInv = 1.0f/mDet;
+                Vec3f T = r.getPosition() - *a;
                 alpha = T * P * mDetInv;    
-                if(alpha < 0 || alpha > 1) return false;
+                if(alpha < 0.0 || alpha > 1.0) return false;
 
                 Vec3f Q = T ^ AB;
-                beta = rDir * Q * mDetInv;
-                if(beta < 0 || alpha + beta > 1) return false;
+                beta = r.getDirection() * Q * mDetInv;
+                if(beta < 0.0 || alpha + beta > 1.0) return false;
                 t = AC * Q * mDetInv;
 
                 if(fabsf(t) < RAY_EPSILON) return false; // Jaysus this sucked
                 i.bary = Vec3f(1 - (alpha + beta), alpha, beta);
+                //printf("t=%f\n", t);
                 i.t = t;
 
 
                 // std::cout << traceUI->smShadSw() << std::endl; 
                 // if(traceUI->smShadSw() && !parent->floatCheck()){
                 //Smooth Shading
-                Vec3f aN = normals[ids.a.normal_index];
-                Vec3f bN = normals[ids.b.normal_index];
-                Vec3f cN = normals[ids.c.normal_index];
-                i.N = (1 - (alpha + beta))*aN + \
-                      alpha*bN + \
-                      beta*cN;
+                i.N = (1 - (alpha + beta))*normals[ids->a.normal_index] + \
+                      alpha*normals[ids->b.normal_index] + \
+                      beta*normals[ids->c.normal_index];
 
                 //i.N = normal;
 
@@ -126,14 +123,10 @@ class BVH_d {
 
                 i.object_id = object_id;
                 //if(!parent->materials.empty() && parent->hasVertexMaterials()){
-                Material aM;
                 //TODO Be able to uncomment the following lines
                 //int material_id = material_ids[object_id];
-                //aM += (1 - (alpha + beta))*(materials[ids.a]); 
-                //aM +=                alpha*(materials[ids.b]); 
-                //aM +=                beta* (materials[ids.c]); 
-
-                i.material = aM;
+                //Material aM = materials[material_id];
+                //i.material = aM;
 
                 return true;
 
@@ -141,6 +134,22 @@ class BVH_d {
             }
             __device__
                 bool intersect(const ray& r, isect& i){
+                    bool haveOne = false;
+                    isect* cur = new isect();
+                    //printf("HERE\n");
+                    for(int j = 0; j < numTriangles; j++){
+                        if(intersectTriangle(r, *cur, object_ids[j])){
+                            if(!haveOne || (cur->t < i.t)){
+                                //printf("FOUND ONE t=%f\n",cur->t);
+                                i = *cur;
+                                haveOne = true;
+                            }
+                        }
+                    }
+                if(!haveOne) i.t = 1000.0;
+                delete cur;
+                //printf("Closest is %d, %f\n", i.object_id, i.t);
+                return haveOne;
 
                 }
 

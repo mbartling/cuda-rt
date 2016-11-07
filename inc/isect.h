@@ -7,9 +7,9 @@ class isect {
         Vec3f N;
         Vec3f bary;
         int object_id;
-        Material material; // For smooth shading
+//        Material material; // For smooth shading
 
-        __device__
-        Material& getMaterial() { return material; }
+//        __device__
+//        Material& getMaterial() { return material; }
 
 };

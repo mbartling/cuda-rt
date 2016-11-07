@@ -1,4 +1,5 @@
 #include "scene.h"
+#include <stdio.h>
 
 
 // Load the OBJ and add all the triangles to a linear array
@@ -58,6 +59,7 @@ Scene_h& Scene_h::operator = (const Scene_d& deviceScene){
     cudaMalloc(&smallImage, imageWidth*imageHeight*sizeof(Vec3f));
 
     AverageSuperSampling(smallImage, deviceScene.image, imageWidth, imageHeight, superSampling);
+    image.resize(imageWidth*imageHeight);
     
     cudaMemcpy(image.data(), smallImage, imageWidth*imageHeight*sizeof(Vec3f), cudaMemcpyDeviceToHost);
     
@@ -79,13 +81,18 @@ Scene_d& Scene_d::operator = (const Scene_h& hostScene){
     cudaMalloc(&BBoxs, numTriangles*sizeof(BoundingBox));
     cudaMalloc(&t_indices, numTriangles*sizeof(TriangleIndices));
     cudaMalloc(&materials, numMaterials*sizeof(Material));
+    cudaMalloc(&material_ids, numTriangles*sizeof(int));
 
     cudaMalloc(&image, imageWidth*imageHeight*sizeof(Vec3f));
+    cudaMalloc(&camera, sizeof(Camera));
 
     //Copy stuff
     cudaMemcpy(vertices, hostScene.mAttributes.vertices.data(), numVertices*sizeof(Vec3f), cudaMemcpyHostToDevice);
     cudaMemcpy(normals, hostScene.mAttributes.normals.data(), numVertices*sizeof(Vec3f), cudaMemcpyHostToDevice);
     cudaMemcpy(t_indices, hostScene.t_indices.data(), numTriangles*sizeof(TriangleIndices), cudaMemcpyHostToDevice);
+    cudaMemcpy(material_ids, hostScene.material_ids.data(), numTriangles*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(materials, hostScene.materials.data(), numMaterials*sizeof(Material), cudaMemcpyHostToDevice);
+    cudaMemcpy(camera, hostScene.camera, sizeof(Camera), cudaMemcpyHostToDevice);
 
     computeBoundingBoxes();
     
@@ -94,7 +101,7 @@ Scene_d& Scene_d::operator = (const Scene_h& hostScene){
     Vec3f mMin;
     Vec3f mMax;
     findMinMax(mMin, mMax);
-    bvh.setUp(vertices,normals, BBoxs, t_indices, numTriangles, materials, mMin , mMax);
+    bvh.setUp(vertices,normals, BBoxs, t_indices, numTriangles, materials, mMin , mMax, material_ids);
     printf("found min(%0.6f, %0.6f , %0.6f)" , mMin.x , mMin.y , mMin.z);
     printf("found max(%0.6f, %0.6f , %0.6f)" , mMax.x , mMax.y , mMax.z);
 

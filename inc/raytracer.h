@@ -2,6 +2,7 @@
 #include "scene.h"
 #include "bitmap.h"
 #include "Light.h"
+#include <stdio.h>
 
 struct RGB {
     unsigned char r;
@@ -42,6 +43,7 @@ class RayTracer{
         }
 
         void LoadObj(string filename, string mtl_basepath){ hostScene.LoadObj(filename, mtl_basepath); }
+        void setCamera(Camera* _camera) {hostScene.setCamera( _camera);}
         void setUpDevice(){ deviceScene = hostScene; }
         void setHostLight(const Light_h& mLight) { 
             hostLight = mLight; 
@@ -51,10 +53,12 @@ class RayTracer{
         void pullRaytracedImage(){ 
             hostScene = deviceScene; 
             vector<Vec3f> hostSceneImage = hostScene.getImage();
+            printf("imageSize %d\n", hostSceneImage.size());
             for(int i = 0; i < hostSceneImage.size(); i++){
                 image[i].r = (unsigned char)(255.0 * hostSceneImage[i].x);
                 image[i].g = (unsigned char)(255.0 * hostSceneImage[i].y);
                 image[i].b = (unsigned char)(255.0 * hostSceneImage[i].z);
+                //printf("%d %d %d\n", image[i].r, image[i].g, image[i].b);
             }
 
         }

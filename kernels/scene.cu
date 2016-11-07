@@ -142,6 +142,7 @@ void AverageSuperSamplingKernel(Vec3f* smallImage, Vec3f* deviceImage, int image
         }
     }
 
+    //printf("idx = %d, mSum=%f,%f,%f\n", pixelIdx, mSum.x, mSum.y, mSum.z);
     mSum /= float(superSampling);
     smallImage[pixelIdx] = mSum;
 }

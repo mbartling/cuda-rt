@@ -34,6 +34,7 @@ class Scene_h{
         vector<TriangleIndices> t_indices;
         vector<int> material_ids;
         vector<Material> materials;
+        Camera* camera;
 
         int imageWidth;
         int imageHeight;
@@ -50,7 +51,7 @@ class Scene_h{
         vector<Vec3f> getImage() const {return image;}
 
         Scene_h& operator = (const Scene_d& deviceScene); //Copy image from the device
-
+        void setCamera(Camera* _camera){camera = _camera; }
 
 };
 
@@ -79,7 +80,7 @@ class Scene_d{
         BVH_d bvh;
 
         Light* light;
-        Camera camera;
+        Camera* camera;
 
         friend class Scene_h;
     public:
@@ -91,6 +92,7 @@ class Scene_d{
 
         __device__
         bool intersect(const ray& r, isect& i){ //Find the closest point of intersection
+            //printf("in SCENE INTERSECT\n");
             return bvh.intersect(r, i);
         }
 
@@ -98,7 +100,7 @@ class Scene_d{
         Light* getLight(){ return light; }
 
         __device__
-        Camera* getCamera() { return &camera; }
+        Camera* getCamera() { return camera; }
 
         ~Scene_d();
 
