@@ -1,7 +1,8 @@
 #pragma once
 #include "scene.h"
 
-#define DIRECTIONAL_LIGHT 1
+//#define DIRECTIONAL_LIGHT 1
+#define POSITIONAL_LIGHT 1
 
 struct Light_h{
 
@@ -16,6 +17,11 @@ struct Light_h{
     //Area Light Stuff
     float width;
     float height;
+    float radius;
+    //    f(d) = min( 1, 1/( a + b d + c d^2 ) )
+    float constantTerm;        // a
+    float linearTerm;        // b
+    float quadraticTerm;    // c
 
 
 };
@@ -35,6 +41,12 @@ class Light {
         //Area Light Stuff
         float width;
         float height;
+        
+        float radius; // +-  from the center of the point (soft shadows)
+        //    f(d) = min( 1, 1/( a + b d + c d^2 ) )
+        float constantTerm;        // a
+        float linearTerm;        // b
+        float quadraticTerm;    // c
 
     public:
         __device__
