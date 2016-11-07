@@ -79,7 +79,7 @@ class Scene_d{
         BVH_d bvh;
 
         Light* light;
-        Camera camera;
+        Camera* camera;
 
         friend class Scene_h;
     public:
@@ -99,7 +99,7 @@ class Scene_d{
         Light* getLight(){ return light; }
 
         __device__
-        Camera* getCamera() { return &camera; }
+        Camera* getCamera() { return camera; }
 
         ~Scene_d();
 
