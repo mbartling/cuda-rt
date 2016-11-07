@@ -65,9 +65,9 @@ void runRayTracerKernelRec(Scene_d* scene, int depth){
     //y += randy; //in [0,1]
     ray r;
     scene->getCamera()->rayThrough(x, y, r);
-    //printf("RAY %d, p=(%f,%f,%f), d=(%f,%f,%f)\n", idx, r.p.x, r.p.y, r.p.z, r.d.x, r.d.y, r.d.z);
+    printf("RAY %d, p=(%f,%f,%f), d=(%f,%f,%f)\n", idx, r.p.x, r.p.y, r.p.z, r.d.x, r.d.y, r.d.z);
     Vec3f colorC;
-    printf("Attempting to trace ray\n");
+    //printf("Attempting to trace ray\n");
     colorC = traceRay(scene, r, depth);
 
     scene->image[idx] = colorC;
@@ -96,7 +96,7 @@ Vec3f traceRay(Scene_d* scene, ray& r, int depth){
         // rays.
         const Material* m = &scene->materials[scene->material_ids[i->object_id]]; //i->material;	  
         colorC = m->shade(scene, r, *i);
-        printf("colorC=(%f,%f,%f)\n", colorC.x, colorC.y, colorC.z);
+//        printf("colorC=(%f,%f,%f)\n", colorC.x, colorC.y, colorC.z);
         if(depth <= 0){
             delete i;
             return colorC;
