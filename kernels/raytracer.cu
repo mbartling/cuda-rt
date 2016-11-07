@@ -53,8 +53,9 @@ __global__
 void runRayTracerKernelRec(Scene_d* scene, int depth){
 
     int px = blockIdx.x * blockDim.x + threadIdx.x;
+    //int py = scene->imageHeight - 1 - blockIdx.y * blockDim.y + threadIdx.y;
     int py = blockIdx.y * blockDim.y + threadIdx.y;
-    int idx = py*scene->imageWidth + px;
+    int idx = (scene->imageHeight - py - 1)*scene->imageWidth + px;
     /*
        unsigned width = 640, height = 480; 
        Vec3f *image = new Vec3f[width * height], *pixel = image; 
