@@ -6,22 +6,22 @@
 
 struct Light_h{
 
-    Vec3f color;
+    Vec3d color;
     //#if POINT_LIGHT
-    Vec3f position;
+    Vec3d position;
     //#endif
     //#if DIRECTIONAL_LUGHT
-    Vec3f orientation;
+    Vec3d orientation;
     //#endif
 
     //Area Light Stuff
-    float width;
-    float height;
-    float radius;
+    double width;
+    double height;
+    double radius;
     //    f(d) = min( 1, 1/( a + b d + c d^2 ) )
-    float constantTerm;        // a
-    float linearTerm;        // b
-    float quadraticTerm;    // c
+    double constantTerm;        // a
+    double linearTerm;        // b
+    double quadraticTerm;    // c
 
 
     __host__ __device__
@@ -32,44 +32,44 @@ class Light {
     private:
 
         Scene_d* scene;
-        Vec3f color;
+        Vec3d color;
         //#if POINT_LIGHT
-        Vec3f position;
+        Vec3d position;
         //#endif
         //#if DIRECTIONAL_LUGHT
-        Vec3f orientation;
+        Vec3d orientation;
         //#endif
 
         //Area Light Stuff
-        float width;
-        float height;
+        double width;
+        double height;
         
-        float radius; // +-  from the center of the point (soft shadows)
+        double radius; // +-  from the center of the point (soft shadows)
         //    f(d) = min( 1, 1/( a + b d + c d^2 ) )
-        float constantTerm;        // a
-        float linearTerm;        // b
-        float quadraticTerm;    // c
+        double constantTerm;        // a
+        double linearTerm;        // b
+        double quadraticTerm;    // c
 
     public:
         __device__
-            Vec3f shadowAttenuation(const ray& r, const Vec3f& pos);
+            Vec3d shadowAttenuation(const ray& r, const Vec3d& pos);
 
         __device__
-            float distanceAttenuation(const Vec3f& p);
+            double distanceAttenuation(const Vec3d& p);
 
         __device__
-            Vec3f getDirection(const Vec3f& p);
+            Vec3d getDirection(const Vec3d& p);
 
         __device__
-            Vec3f getColor();
+            Vec3d getColor();
 
         __host__ __device__
-            Light(Scene_d* scene, const Vec3f& col) : color(col), scene(scene) {}
+            Light(Scene_d* scene, const Vec3d& col) : color(col), scene(scene) {}
         __device__
             Light(Scene_d* scene, const Light_h& light): scene(scene) {
                 color       = light.color       ;
                 position    = light.position    ;
-                //position    = Vec3f(1.0,1.0,1.0)    ;
+                //position    = Vec3d(1.0,1.0,1.0)    ;
                 orientation = light.orientation ;
                 width       = light.width       ;
                 height      = light.height      ;
@@ -81,10 +81,10 @@ class Light {
 
         //Directional Light
         __host__ __device__
-            Light(Scene_d* scene, const Vec3f& col, const Vec3f& orientation) : color(col), scene(scene), orientation(orientation) {}
+            Light(Scene_d* scene, const Vec3d& col, const Vec3d& orientation) : color(col), scene(scene), orientation(orientation) {}
 
         //Point Light
         __host__ __device__
-            Light(Scene_d* scene, const Vec3f& col, const Vec3f& position, const Vec3f& orientation) : color(col), scene(scene), position(position), orientation(orientation) {}
+            Light(Scene_d* scene, const Vec3d& col, const Vec3d& position, const Vec3d& orientation) : color(col), scene(scene), position(position), orientation(orientation) {}
 
 };

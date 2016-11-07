@@ -17,10 +17,10 @@ unsigned int expandBits(unsigned int v);
 // Calculates a 30-bit Morton code for the
 // given 3D point located within the unit cube [0,1].
 __device__
-unsigned int morton3D(float x, float y, float z);
+unsigned int morton3D(double x, double y, double z);
 
 __device__ __inline__
-Vec3f computeCentroid(const BoundingBox& BBox){
+Vec3d computeCentroid(const BoundingBox& BBox){
     return (BBox.getMin() + BBox.getMax()) / 2.0f;
 };
 __device__
@@ -33,7 +33,7 @@ int2 determineRange(unsigned int* sortedMortonCodes, int numTriangles, int idx);
 
 __global__ 
 void computeMortonCodesKernel(unsigned int* mortonCodes, unsigned int* object_ids, 
-        BoundingBox* BBoxs, int numTriangles, Vec3f mMin, Vec3f mMax);
+        BoundingBox* BBoxs, int numTriangles, Vec3d mMin, Vec3d mMax);
 __global__ 
 void setupLeafNodesKernel(unsigned int* sorted_object_ids, 
         LeafNode* leafNodes, int numTriangles);
@@ -44,7 +44,7 @@ void generateHierarchyKernel(unsigned int* mortonCodes,
         InternalNode* internalNodes,
         LeafNode* leafNodes, int numTriangles);
 
-void BVH_d::computeMortonCodes(Vec3f& mMin, Vec3f& mMax){
+void BVH_d::computeMortonCodes(Vec3d& mMin, Vec3d& mMax){
     int threadsPerBlock = 256;
     int blocksPerGrid =
         (numTriangles + threadsPerBlock - 1) / threadsPerBlock;
@@ -95,13 +95,13 @@ void bvh(Scene_h& scene_h)
 // This kernel just computes the object id and morton code for the centroid of each bounding box
 __global__ 
 void computeMortonCodesKernel(unsigned int* mortonCodes, unsigned int* object_ids, 
-        BoundingBox* BBoxs, int numTriangles, Vec3f mMin , Vec3f mMax){
+        BoundingBox* BBoxs, int numTriangles, Vec3d mMin , Vec3d mMax){
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx >= numTriangles)
         return;
 
     object_ids[idx] = idx;
-    Vec3f centroid = computeCentroid(BBoxs[idx]);
+    Vec3d centroid = computeCentroid(BBoxs[idx]);
     centroid.x = (centroid.x - mMin.x)/(mMax.x - mMin.x);
     centroid.y = (centroid.y - mMin.y)/(mMax.y - mMin.y);
     centroid.z = (centroid.z - mMin.z)/(mMax.z - mMin.z);
@@ -306,7 +306,7 @@ unsigned int expandBits(unsigned int v)
 // Calculates a 30-bit Morton code for the
 // given 3D point located within the unit cube [0,1].
     __device__
-unsigned int morton3D(float x, float y, float z)
+unsigned int morton3D(double x, double y, double z)
 {
     x = min(max(x * 1024.0f, 0.0f), 1023.0f);
     y = min(max(y * 1024.0f, 0.0f), 1023.0f);

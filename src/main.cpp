@@ -89,9 +89,9 @@ const option::Descriptor usage[] = {
   { NUMERIC, 0,"n","numeric", Arg::Numeric, "  -n <num>, \t--numeric=<num>  \tRequires a number as argument." },
   { NONEMPTY,0,"1","nonempty",Arg::NonEmpty,"  -1 <arg>, \t--nonempty=<arg>"
                                             "  \tCan NOT take the empty string as argument." },
-  { lORIENTATION, 0,"d","orientation", Arg::Required, "  -d <float,float,float>, \t--orientation=<float,float,float>  \tRequires 3 floats as argument." },
-  { lPOSITION, 0,"p","position", Arg::Required, "  -p <float,float,float>, \t--position=<float,float,float>  \tRequires 3 floats as argument." },
-  { lCOLOR, 0,"c","color", Arg::Required, "  -c <float,float,float>, \t--color=<float,float,float>  \tRequires 3 floats as argument." },
+  { lORIENTATION, 0,"d","orientation", Arg::Required, "  -d <double,double,double>, \t--orientation=<double,double,double>  \tRequires 3 doubles as argument." },
+  { lPOSITION, 0,"p","position", Arg::Required, "  -p <double,double,double>, \t--position=<double,double,double>  \tRequires 3 doubles as argument." },
+  { lCOLOR, 0,"c","color", Arg::Required, "  -c <double,double,double>, \t--color=<double,double,double>  \tRequires 3 doubles as argument." },
   { WIDTH, 0,"w","width", Arg::Numeric, "  -w <int>, \t--color=<int>  \tSet width" },
   { HEIGHT, 0,"h","height", Arg::Numeric, "  -h <int>, \t--color=<int>  \tSet height" },
   { OUTPUT, 0,"o","output", Arg::Required, "  -o <arg>, \t--output=<arg>  \tOutput file argument required." },
@@ -126,8 +126,8 @@ int main(int argc, char* argv[])
   string sceneName = "", outputFile = "", mtlFile = "", temp = "";
   vector<string> x;
   int height=512, width=512;
-  float arr[3];
-  Vec3f color = Vec3f(1.f,1.f,1.f), position = Vec3f(1.f,1.f,1.f), orientation = Vec3f(1.f,1.f,1.f);
+  double arr[3];
+  Vec3d color = Vec3d(1.f,1.f,1.f), position = Vec3d(1.f,1.f,1.f), orientation = Vec3d(1.f,1.f,1.f);
   string::size_type sz;
 
   argc-=(argc>0); argv+=(argc>0); // skip program name argv[0] if present
@@ -188,7 +188,7 @@ int main(int argc, char* argv[])
                 arr[i] = stof(x[i], &sz);
                 fprintf(stdout, "options for orientation are %f \n", arr[i]);
             }
-            orientation = Vec3f(arr[0], arr[1], arr[2]);
+            orientation = Vec3d(arr[0], arr[1], arr[2]);
         }
         break;
       case lPOSITION:
@@ -198,7 +198,7 @@ int main(int argc, char* argv[])
             for(int i=0; i < x.size(); i++) {
                 arr[i] = stof(x[i], &sz);
             }
-            position = Vec3f(arr[0], arr[1], arr[2]);
+            position = Vec3d(arr[0], arr[1], arr[2]);
         }
         break;
       case lCOLOR:
@@ -209,7 +209,7 @@ int main(int argc, char* argv[])
                 arr[i] = stof(x[i], &sz);
                 //fprintf(stdout, "options for color are %f \n", arr[i]);
             }
-            color = Vec3f(arr[0], arr[1], arr[2]);
+            color = Vec3d(arr[0], arr[1], arr[2]);
         }
         break;
       case NUMERIC:
@@ -243,7 +243,7 @@ int main(int argc, char* argv[])
         // which aborts the parse with an error
         break;
     }
-    x.clear(); //remove floats from previous parsing
+    x.clear(); //remove doubles from previous parsing
   }
 
   for (int i = 0; i < parse.nonOptionsCount(); ++i)

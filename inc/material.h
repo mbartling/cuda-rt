@@ -9,15 +9,15 @@ class isect;
 class Light;
 
 struct Material {
-    Vec3f ka; //Ambient
-    Vec3f kd; //diffuse
-    Vec3f ks; //specular
-    Vec3f kt; //Transmittance
-    Vec3f ke; //Emmission
-    Vec3f kr; //reflectance == specular
-    float shininess;
-    float ior;
-    float dissolve; // 1 == opaque; 0 == fully transparent
+    Vec3d ka; //Ambient
+    Vec3d kd; //diffuse
+    Vec3d ks; //specular
+    Vec3d kt; //Transmittance
+    Vec3d ke; //Emmission
+    Vec3d kr; //reflectance == specular
+    double shininess;
+    double ior;
+    double dissolve; // 1 == opaque; 0 == fully transparent
 
     bool _refl;								  // specular reflector?
     bool _trans;							  // specular transmitter?
@@ -43,7 +43,7 @@ struct Material {
         }
 
     __device__
-        Vec3f shade(Scene_d* scene, const ray& r, const isect& i) const ;
+        Vec3d shade(Scene_d* scene, const ray& r, const isect& i) const ;
     __device__
         Material& operator += (const Material& m){
             ke += m.ke;
@@ -60,13 +60,13 @@ struct Material {
         }
 
     friend __device__ __inline__
-        Material operator*(float d, Material m);
+        Material operator*(double d, Material m);
 
 
 };
 
 __device__ __inline__
-Material operator*(float d, Material m){
+Material operator*(double d, Material m){
     m.ke *= d;
     m.ka *= d;
     m.ks *= d;

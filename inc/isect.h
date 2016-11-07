@@ -3,9 +3,9 @@
 #include "material.h"
 class isect {
     public:
-        float t;
-        Vec3f N;
-        Vec3f bary;
+        double t;
+        Vec3d N;
+        Vec3d bary;
         int object_id;
 //        Material material; // For smooth shading
 

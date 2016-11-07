@@ -20,12 +20,12 @@ void Scene_h::LoadObj(string filename, string mtl_basepath){
 
     for(size_t m = 0; m < material.size(); m++){
         Material mat;
-        mat.ka = Vec3f(material[m].ambient);
-        mat.kd = Vec3f(material[m].diffuse);
-        mat.ks = Vec3f(material[m].specular);
-        mat.kt = Vec3f(material[m].transmittance);
-        mat.ke = Vec3f(material[m].emission);
-        mat.kr = Vec3f(material[m].specular);
+        mat.ka = Vec3d(material[m].ambient);
+        mat.kd = Vec3d(material[m].diffuse);
+        mat.ks = Vec3d(material[m].specular);
+        mat.kt = Vec3d(material[m].transmittance);
+        mat.ke = Vec3d(material[m].emission);
+        mat.kr = Vec3d(material[m].specular);
         mat.shininess = material[m].shininess;
         mat.ior = material[m].ior;
         mat.dissolve = material[m].dissolve;
@@ -55,13 +55,13 @@ void Scene_h::LoadObj(string filename, string mtl_basepath){
 }
 
 Scene_h& Scene_h::operator = (const Scene_d& deviceScene){
-    Vec3f* smallImage;
-    cudaMalloc(&smallImage, imageWidth*imageHeight*sizeof(Vec3f));
+    Vec3d* smallImage;
+    cudaMalloc(&smallImage, imageWidth*imageHeight*sizeof(Vec3d));
 
     AverageSuperSampling(smallImage, deviceScene.image, imageWidth, imageHeight, superSampling);
     image.resize(imageWidth*imageHeight);
     
-    cudaMemcpy(image.data(), smallImage, imageWidth*imageHeight*sizeof(Vec3f), cudaMemcpyDeviceToHost);
+    cudaMemcpy(image.data(), smallImage, imageWidth*imageHeight*sizeof(Vec3d), cudaMemcpyDeviceToHost);
     
     cudaFree(smallImage);
 }
@@ -75,20 +75,20 @@ Scene_d& Scene_d::operator = (const Scene_h& hostScene){
     imageHeight = hostScene.imageHeight * hostScene.superSampling;
 
     //Allocate Space for everything
-    cudaMalloc(&vertices, numVertices*sizeof(Vec3f));
-    cudaMalloc(&normals, numVertices*sizeof(Vec3f));
+    cudaMalloc(&vertices, numVertices*sizeof(Vec3d));
+    cudaMalloc(&normals, numVertices*sizeof(Vec3d));
 
     cudaMalloc(&BBoxs, numTriangles*sizeof(BoundingBox));
     cudaMalloc(&t_indices, numTriangles*sizeof(TriangleIndices));
     cudaMalloc(&materials, numMaterials*sizeof(Material));
     cudaMalloc(&material_ids, numTriangles*sizeof(int));
 
-    cudaMalloc(&image, imageWidth*imageHeight*sizeof(Vec3f));
+    cudaMalloc(&image, imageWidth*imageHeight*sizeof(Vec3d));
     cudaMalloc(&camera, sizeof(Camera));
 
     //Copy stuff
-    cudaMemcpy(vertices, hostScene.mAttributes.vertices.data(), numVertices*sizeof(Vec3f), cudaMemcpyHostToDevice);
-    cudaMemcpy(normals, hostScene.mAttributes.normals.data(), numVertices*sizeof(Vec3f), cudaMemcpyHostToDevice);
+    cudaMemcpy(vertices, hostScene.mAttributes.vertices.data(), numVertices*sizeof(Vec3d), cudaMemcpyHostToDevice);
+    cudaMemcpy(normals, hostScene.mAttributes.normals.data(), numVertices*sizeof(Vec3d), cudaMemcpyHostToDevice);
     cudaMemcpy(t_indices, hostScene.t_indices.data(), numTriangles*sizeof(TriangleIndices), cudaMemcpyHostToDevice);
     cudaMemcpy(material_ids, hostScene.material_ids.data(), numTriangles*sizeof(int), cudaMemcpyHostToDevice);
     cudaMemcpy(materials, hostScene.materials.data(), numMaterials*sizeof(Material), cudaMemcpyHostToDevice);
@@ -98,8 +98,8 @@ Scene_d& Scene_d::operator = (const Scene_h& hostScene){
     
 
 
-    Vec3f mMin;
-    Vec3f mMax;
+    Vec3d mMin;
+    Vec3d mMax;
     findMinMax(mMin, mMax);
     bvh.setUp(vertices,normals, BBoxs, t_indices, numTriangles, materials, mMin , mMax, material_ids);
     printf("found min(%0.6f, %0.6f , %0.6f)" , mMin.x , mMin.y , mMin.z);

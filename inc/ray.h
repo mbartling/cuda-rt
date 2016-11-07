@@ -21,7 +21,7 @@ class ray {
     public:
 
         __host__ __device__
-        ray(const Vec3f &pp, const Vec3f &dd)
+        ray(const Vec3d &pp, const Vec3d &dd)
             : p(pp), d(dd) {}
         __host__ __device__
         ray()
@@ -36,23 +36,23 @@ class ray {
         { p = other.p; d = other.d; return *this; }
 
         __host__ __device__
-        Vec3f at( float t ) const
+        Vec3d at( double t ) const
         { return p + (t*d); }
 
         __host__ __device__
-        Vec3f getPosition() const { return p; }
+        Vec3d getPosition() const { return p; }
         __host__ __device__
-        Vec3f getDirection() const { return d; }
+        Vec3d getDirection() const { return d; }
 
     public:
-        Vec3f p;
-        Vec3f d;
+        Vec3d p;
+        Vec3d d;
 };
 
 // The description of an intersection point.
 
 __host__ __device__
-Vec3f CosWeightedRandomHemiDir2(Vec3f n);
+Vec3d CosWeightedRandomHemiDir2(Vec3d n);
 
 
 #endif // __RAY_H__

@@ -44,8 +44,8 @@ class BVH_d {
 
         // These are stored in the scene
         int numTriangles;
-        Vec3f* vertices; 
-        Vec3f* normals;
+        Vec3d* vertices; 
+        Vec3d* normals;
         BoundingBox* BBoxs;
         TriangleIndices* t_indices;
         Material* materials;
@@ -54,9 +54,9 @@ class BVH_d {
 
     public:
 
-        void setUp(Vec3f* mvertices, Vec3f* mnormals, BoundingBox* mBBoxs, TriangleIndices* mt_indices, int mnumTriangles, Material* mmaterials, Vec3f mMin , Vec3f mMax, int* mmaterial_ids);
+        void setUp(Vec3d* mvertices, Vec3d* mnormals, BoundingBox* mBBoxs, TriangleIndices* mt_indices, int mnumTriangles, Material* mmaterials, Vec3d mMin , Vec3d mMax, int* mmaterial_ids);
         ~BVH_d();
-        void computeMortonCodes(Vec3f& mMin, Vec3f& mMax); //Also Generates the objectIds
+        void computeMortonCodes(Vec3d& mMin, Vec3d& mMax); //Also Generates the objectIds
         void sortMortonCodes();
 
         void setupLeafNodes();
@@ -67,9 +67,9 @@ class BVH_d {
 
                 const TriangleIndices* ids = &t_indices[object_id];
 
-                const Vec3f* a = &vertices[ids->a.vertex_index];
-                const Vec3f* b = &vertices[ids->b.vertex_index];
-                const Vec3f* c = &vertices[ids->c.vertex_index];
+                const Vec3d* a = &vertices[ids->a.vertex_index];
+                const Vec3d* b = &vertices[ids->b.vertex_index];
+                const Vec3d* c = &vertices[ids->c.vertex_index];
 
                 /*
                    -DxAO = AOxD
@@ -79,41 +79,41 @@ class BVH_d {
                    |-D AO AC| = -D*(AOxAC) = 1. 1x || AC*(-DxAO) = AC*M = 1. 1x
                    |-D AB AO| = -D*(ABxAO) = 1. 1x || (AOx-D)*AB = (DxAO)*AB = -M*AB = 1.
                    */
-                float mDet;
-                float mDetInv;
-                float alpha;
-                float beta;
-                float t;
+                double mDet;
+                double mDetInv;
+                double alpha;
+                double beta;
+                double t;
                 //Moller-Trombore approach is a change of coordinates into a local uv space
                 // local to the triangle
-                Vec3f AB = *b - *a;
-                Vec3f AC = *c - *a;
+                Vec3d AB = *b - *a;
+                Vec3d AC = *c - *a;
 
                 // if (normal * -r.getDirection() < 0) return false;
-                Vec3f P = r.getDirection() ^ AC;
+                Vec3d P = r.getDirection() ^ AC;
                 mDet = AB * P;
                 if(fabsf(mDet) < RAY_EPSILON ) return false;
 
                 mDetInv = 1.0f/mDet;
-                Vec3f T = r.getPosition() - *a;
+                Vec3d T = r.getPosition() - *a;
                 alpha = T * P * mDetInv;    
                 if(alpha < 0.0 || alpha > 1.0) return false;
 
-                Vec3f Q = T ^ AB;
+                Vec3d Q = T ^ AB;
                 beta = r.getDirection() * Q * mDetInv;
                 if(beta < 0.0 || alpha + beta > 1.0) return false;
                 t = AC * Q * mDetInv;
 
                 //if( t < RAY_EPSILON ) return false;
                 if(fabsf(t) < RAY_EPSILON) return false; // Jaysus this sucked
-                i.bary = Vec3f(1 - (alpha + beta), alpha, beta);
+                i.bary = Vec3d(1 - (alpha + beta), alpha, beta);
                 //printf("t=%f\n", t);
                 if( t < 0.0 ) return false;
                 i.t = t;
 
 
                 // std::cout << traceUI->smShadSw() << std::endl; 
-                // if(traceUI->smShadSw() && !parent->floatCheck()){
+                // if(traceUI->smShadSw() && !parent->doubleCheck()){
                 //Smooth Shading
                 i.N = (1.0 - (alpha + beta))*normals[ids->a.normal_index] + \
                       alpha*normals[ids->b.normal_index] + \

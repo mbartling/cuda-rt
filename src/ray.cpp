@@ -2,7 +2,7 @@
 #include <cmath>
 #include <stdlib.h>
 
-Vec3f CosWeightedRandomHemiDir2(Vec3f n){
+Vec3d CosWeightedRandomHemiDir2(Vec3d n){
   double Xi1 = (double)rand()/(double)RAND_MAX;
   double Xi2 = (double)rand()/(double)RAND_MAX;
 
@@ -14,7 +14,7 @@ Vec3f CosWeightedRandomHemiDir2(Vec3f n){
   double zs = sin(theta)*sin(phi);
 
 //this doesn't compile comment it out for now
-  Vec3f h = n;
+  Vec3d h = n;
   if(fabsf(h.x) <= fabsf(h.y) && fabsf(h.x) <= fabsf(h.z))
     h.x = 1.0;
   else if(fabsf(h.y) <= fabsf(h.x) && fabsf(h.y) <= fabsf(h.z))
@@ -22,11 +22,11 @@ Vec3f CosWeightedRandomHemiDir2(Vec3f n){
   else
     h.z = 1.0;
 
-  Vec3f x = (h ^ n); 
+  Vec3d x = (h ^ n); 
   normalize(x);
-  Vec3f z = (x ^ n); 
+  Vec3d z = (x ^ n); 
   normalize(z);
-  Vec3f dir = xs*x + ys*n + zs*z;
+  Vec3d dir = xs*x + ys*n + zs*z;
   normalize(dir);
   return dir;
 }

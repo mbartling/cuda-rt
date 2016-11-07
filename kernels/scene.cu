@@ -7,40 +7,40 @@
 struct minAccessor{
     
     __host__ __device__
-    Vec3f operator () (const BoundingBox& a){
+    Vec3d operator () (const BoundingBox& a){
         return a.bmin;
     }
 };
 
 struct minFunctor{
     __host__ __device__
-    Vec3f operator () (const Vec3f& a, const Vec3f& b){
+    Vec3d operator () (const Vec3d& a, const Vec3d& b){
         return minimum(a,b);
     }
 };
 struct maxAccessor{
     
     __host__ __device__
-    Vec3f operator () (const BoundingBox& a){
+    Vec3d operator () (const BoundingBox& a){
         return a.bmax;
     }
 };
 
 struct maxFunctor{
     __host__ __device__
-    Vec3f operator () (const Vec3f& a, const Vec3f& b){
+    Vec3d operator () (const Vec3d& a, const Vec3d& b){
         return maximum(a,b);
     }
 };
 // Declarations
 __global__ 
-void computeBoundingBoxes_kernel(int numTriangles, Vec3f* vertices, TriangleIndices* t_indices, BoundingBox* BBoxs);
+void computeBoundingBoxes_kernel(int numTriangles, Vec3d* vertices, TriangleIndices* t_indices, BoundingBox* BBoxs);
 
 __device__
-BoundingBox computeTriangleBoundingBox(const Vec3f& a, const Vec3f& b, const Vec3f& c);
+BoundingBox computeTriangleBoundingBox(const Vec3d& a, const Vec3d& b, const Vec3d& c);
 
 __global__
-void AverageSuperSamplingKernel(Vec3f* smallImage, Vec3f* deviceImage, int imageWidth, int imageHeight, int superSampling);
+void AverageSuperSamplingKernel(Vec3d* smallImage, Vec3d* deviceImage, int imageWidth, int imageHeight, int superSampling);
 
 //============================
 //
@@ -55,8 +55,8 @@ void Scene_d::computeBoundingBoxes(){
 
 }
 
-void AverageSuperSampling(Vec3f* smallImage, 
-                          Vec3f* deviceImage, 
+void AverageSuperSampling(Vec3d* smallImage, 
+                          Vec3d* deviceImage, 
                           int imageWidth, 
                           int imageHeight, 
                           int superSampling)
@@ -68,24 +68,24 @@ void AverageSuperSampling(Vec3f* smallImage,
     cudaDeviceSynchronize();
 }
 
-void Scene_d::findMinMax(Vec3f& mMin, Vec3f& mMax){
+void Scene_d::findMinMax(Vec3d& mMin, Vec3d& mMax){
 
     thrust::device_ptr<BoundingBox> dvp(BBoxs);
     mMin = thrust::transform_reduce(dvp, 
             dvp + numTriangles, 
             minAccessor(), 
-            Vec3f(1e9, 1e9, 1e9), 
+            Vec3d(1e9, 1e9, 1e9), 
             minFunctor());
     mMax = thrust::transform_reduce(dvp, 
             dvp + numTriangles, 
             maxAccessor(),
-            Vec3f(-1e9, -1e9, -1e9),
+            Vec3d(-1e9, -1e9, -1e9),
             maxFunctor());
 }
 
 
 __global__ 
-void computeBoundingBoxes_kernel(int numTriangles, Vec3f* vertices, TriangleIndices* t_indices, BoundingBox* BBoxs){
+void computeBoundingBoxes_kernel(int numTriangles, Vec3d* vertices, TriangleIndices* t_indices, BoundingBox* BBoxs){
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx >= numTriangles) return;
 
@@ -108,7 +108,7 @@ void computeBoundingBoxes_kernel(int numTriangles, Vec3f* vertices, TriangleIndi
 }
 
 __device__ 
-BoundingBox computeTriangleBoundingBox(const Vec3f& a, const Vec3f& b, const Vec3f& c){
+BoundingBox computeTriangleBoundingBox(const Vec3d& a, const Vec3d& b, const Vec3d& c){
     BoundingBox bbox;
     BoundingBox localbounds;
     localbounds.setMax(maximum( a, b));
@@ -125,13 +125,13 @@ BoundingBox computeTriangleBoundingBox(const Vec3f& a, const Vec3f& b, const Vec
 //}
 
 __global__
-void AverageSuperSamplingKernel(Vec3f* smallImage, Vec3f* deviceImage, int imageWidth, int imageHeight, int superSampling)
+void AverageSuperSamplingKernel(Vec3d* smallImage, Vec3d* deviceImage, int imageWidth, int imageHeight, int superSampling)
 {
     int pixelX = blockIdx.x*blockDim.x + threadIdx.x;
     int pixelY = blockIdx.y*blockDim.y + threadIdx.y;
     int pixelIdx = pixelY*imageWidth + pixelX;
     
-    Vec3f mSum;
+    Vec3d mSum;
     if (superSampling == 1){
         mSum = deviceImage[pixelIdx];
         clamp(mSum);
@@ -143,14 +143,14 @@ void AverageSuperSamplingKernel(Vec3f* smallImage, Vec3f* deviceImage, int image
             int idxX = pixelX*superSampling + j;
             int idxY = pixelY*superSampling + i;
             int idx = idxY*superSampling*imageWidth + idxX;
-            Vec3f temp = deviceImage[idx];
+            Vec3d temp = deviceImage[idx];
             clamp(temp);
             mSum += temp; //Force it to be between 0 and 1
         }
     }
 
     //printf("idx = %d, mSum=%f,%f,%f\n", pixelIdx, mSum.x, mSum.y, mSum.z);
-    mSum /= float(superSampling);
+    mSum /= double(superSampling);
     smallImage[pixelIdx] = mSum;
 }
 

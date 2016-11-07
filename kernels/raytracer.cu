@@ -5,7 +5,7 @@
 struct RayStack{
     ray r;
     isect i;
-    Vec3f colorC;
+    Vec3d colorC;
     int state;
 };
 
@@ -16,7 +16,7 @@ __global__
 void runRayTracerKernelRec(Scene_d* scene, int depth);
 
 __device__ 
-Vec3f traceRay(Scene_d* scene, ray& r, int depth);
+Vec3d traceRay(Scene_d* scene, ray& r, int depth);
 __global__
 void initLight(Scene_d* scene, Light_h hostLight, Light* light){
     printf("Adding Light to scene\n");
@@ -58,23 +58,23 @@ void runRayTracerKernelRec(Scene_d* scene, int depth){
     int idx = (scene->imageHeight - py - 1)*scene->imageWidth + px;
     /*
        unsigned width = 640, height = 480; 
-       Vec3f *image = new Vec3f[width * height], *pixel = image; 
-       float invWidth = 1 / float(width), invHeight = 1 / float(height); 
-       float fov = 30, aspectratio = width / float(height); 
-       float angle = tan(M_PI * 0.5 * fov / 180.); 
+       Vec3d *image = new Vec3d[width * height], *pixel = image; 
+       double invWidth = 1 / double(width), invHeight = 1 / double(height); 
+       double fov = 30, aspectratio = width / double(height); 
+       double angle = tan(M_PI * 0.5 * fov / 180.); 
     // Trace rays
     for (unsigned y = 0; y < height; ++y) { 
     for (unsigned x = 0; x < width; ++x, ++pixel) { 
-    float xx = (2 * ((x + 0.5) * invWidth) - 1) * angle * aspectratio; 
-    float yy = (1 - 2 * ((y + 0.5) * invHeight)) * angle; 
-    Vec3f raydir(xx, yy, -1); 
+    double xx = (2 * ((x + 0.5) * invWidth) - 1) * angle * aspectratio; 
+    double yy = (1 - 2 * ((y + 0.5) * invHeight)) * angle; 
+    Vec3d raydir(xx, yy, -1); 
     raydir.normalize(); 
-     *pixel = trace(Vec3f(0), raydir, spheres, 0); 
+     *pixel = trace(Vec3d(0), raydir, spheres, 0); 
     //                                                                                 } 
     //                                                                                     } i
     */
-    //           float x = float(px)/float(scene->imageWidth);
-    //           float y = float(py)/float(scene->imageHeight);
+    //           double x = double(px)/double(scene->imageWidth);
+    //           double y = double(py)/double(scene->imageHeight);
 
     //Get view from the camera
     //perturb
@@ -82,15 +82,15 @@ void runRayTracerKernelRec(Scene_d* scene, int depth){
     //y += randy; //in [0,1]
     //           ray r;
     //           scene->getCamera()->rayThrough(x, y, r);
-    float invWidth = 1.0 / float(scene->imageWidth), invHeight = 1.0 / float(scene->imageHeight);
-    float fov = 30, aspectratio = float(scene->imageWidth) / float(scene->imageHeight);
-    float angle = tan(M_PI * 0.5 * fov / 180.0f);
-    float xx = (2 * ((px + 0.5) * invWidth) - 1)*angle*aspectratio;
-    float yy = (1 - 2 * ((py + 0.5) * invHeight)) * angle;
-    ray r(Vec3f(0.0,0.0,0.0), Vec3f(xx, yy, -1));
+    double invWidth = 1.0 / double(scene->imageWidth), invHeight = 1.0 / double(scene->imageHeight);
+    double fov = 30, aspectratio = double(scene->imageWidth) / double(scene->imageHeight);
+    double angle = tan(M_PI * 0.5 * fov / 180.0f);
+    double xx = (2 * ((px + 0.5) * invWidth) - 1)*angle*aspectratio;
+    double yy = (1 - 2 * ((py + 0.5) * invHeight)) * angle;
+    ray r(Vec3d(0.0,0.0,0.0), Vec3d(xx, yy, -1));
     normalize(r.d);
     printf("RAY %d, p=(%f,%f,%f), d=(%f,%f,%f)\n", idx, r.p.x, r.p.y, r.p.z, r.d.x, r.d.y, r.d.z);
-    Vec3f colorC;
+    Vec3d colorC;
     //printf("Attempting to trace ray\n");
     colorC = traceRay(scene, r, depth);
 
@@ -99,15 +99,15 @@ void runRayTracerKernelRec(Scene_d* scene, int depth){
 }
 
 __device__ 
-Vec3f traceRay(Scene_d* scene, ray& r, int depth){
+Vec3d traceRay(Scene_d* scene, ray& r, int depth){
     isect* i = new isect();
-    Vec3f colorC;
+    Vec3d colorC;
 
     // std::default_random_engine generator;
-    // std::normal_distribution<float> distribution(0.0,0.01);
+    // std::normal_distribution<double> distribution(0.0,0.01);
     if(scene->intersect(r, *i)) {
         // YOUR CODE HERE
-        Vec3f q = r.at(i->t);
+        Vec3d q = r.at(i->t);
 
         //printf("q=(%f,%f,%f)\n", q.x, q.y, q.z);
         // An intersection occurred!  We've got work to do.  For now,
@@ -129,7 +129,7 @@ Vec3f traceRay(Scene_d* scene, ray& r, int depth){
            if(m.Refl()){
         // std::cout<< "HERE"<< std::endl;
 
-        Vec3f Rdir = -2.0*(r.getDirection()*i.N)*i.N + r.getDirection();
+        Vec3d Rdir = -2.0*(r.getDirection()*i.N)*i.N + r.getDirection();
         normalize(Rdir);
 
         ray R(q, Rdir);
@@ -139,14 +139,14 @@ Vec3f traceRay(Scene_d* scene, ray& r, int depth){
         if(m.Trans()){
 
 
-        Vec3f n = i.N;
-        Vec3f rd = r.getDirection();
-        Vec3f rcos = n*(-rd*n);
-        Vec3f rsin = rcos + rd;
-        float etai = 1.0;
-        float etat = m.ior;
-        Vec3f tcos, tsin;
-        float eta;
+        Vec3d n = i.N;
+        Vec3d rd = r.getDirection();
+        Vec3d rcos = n*(-rd*n);
+        Vec3d rsin = rcos + rd;
+        double etai = 1.0;
+        double etat = m.ior;
+        Vec3d tcos, tsin;
+        double eta;
         if(rd*n < 0){
         eta = etai/etat;
         n = -n;
@@ -154,10 +154,10 @@ Vec3f traceRay(Scene_d* scene, ray& r, int depth){
         eta = etat/etai;
         }
         tsin = eta*rsin;
-        float TIR = 1 - tsin*tsin;
+        double TIR = 1 - tsin*tsin;
         if(TIR >= 0){
         tcos = n*sqrt(TIR);
-        Vec3f Tdir = tcos + tsin;
+        Vec3d Tdir = tcos + tsin;
         normalize(Tdir);
 
         ray T(q, Tdir);
@@ -172,8 +172,8 @@ Vec3f traceRay(Scene_d* scene, ray& r, int depth){
         // No intersection.  This ray travels to infinity, so we color
         // it according to the background color, which in this (simple) case
         // is just black.
-        //colorC = Vec3f(0.0, 0.0, 0.0);
-        colorC = Vec3f(0.9, 0.9, 0.9);
+        //colorC = Vec3d(0.0, 0.0, 0.0);
+        colorC = Vec3d(0.9, 0.9, 0.9);
     }
     delete i;
     return colorC;
@@ -189,8 +189,8 @@ void runRayTracerKernel(Scene_d scene, int depth){
     int py = blockIdx.y * blockDim.y + threadIdx.y;
     int idx = py*scene.imageWidth + px;
 
-    float x = float(px)/float(scene.imageWidth);
-    float y = float(py)/float(scene.imageHeight);
+    double x = double(px)/double(scene.imageWidth);
+    double y = double(py)/double(scene.imageHeight);
 
     //Get view from the camera
     //perturb
@@ -202,19 +202,19 @@ void runRayTracerKernel(Scene_d scene, int depth){
        while(true){
        ray& r = stackPtr->r;
        isect& i = stackPtr->i;
-       Vec3f& colorC = stackPtr->colorC;
+       Vec3d& colorC = stackPtr->colorC;
        int& state = stackPtr->state;
 
        if(state == 0) //Check for intersection
        {
        if(scene.intersect(r, i)){
-       Vec3f q = r.at(i.t);
+       Vec3d q = r.at(i.t);
        colorC = i.material.shade(&scene, r, i);
        if(curDepth >= depth){state = 5;} //Exit
        else
        state = 1;
        }else{
-       colorC = Vec3f(0.0,0.0,0.0);
+       colorC = Vec3d(0.0,0.0,0.0);
        }
        }
        if(state == 1) //Check for reflection
@@ -222,13 +222,13 @@ void runRayTracerKernel(Scene_d scene, int depth){
        if(!i.material.Refl())
        state = 3;
        else{
-       Vec3f Rdir = -2.0*(r.getDirection()*i.N)*i.N + r.getDirection();
+       Vec3d Rdir = -2.0*(r.getDirection()*i.N)*i.N + r.getDirection();
        normalize(Rdir);
 
     //Put DRT stuff HERE
 
     state = 2; //Select next state for my stack frame return
-    Vec3f q = r.at(i.t);
+    Vec3d q = r.at(i.t);
 
     //Push
     stackPtr++;
@@ -249,14 +249,14 @@ void runRayTracerKernel(Scene_d scene, int depth){
     if(!i.material.Trans())
     state = 5; // Done
     else{
-    Vec3f n = i.N;
-    Vec3f rd = r.getDirection();
-    Vec3f rcos = n*(-rd*n);
-    Vec3f rsin = rcos + rd;
-    float etai = 1.0;
-    float etat = i.material.ior;
-    Vec3f tcos, tsin;
-    float eta;
+    Vec3d n = i.N;
+    Vec3d rd = r.getDirection();
+    Vec3d rcos = n*(-rd*n);
+    Vec3d rsin = rcos + rd;
+    double etai = 1.0;
+    double etat = i.material.ior;
+    Vec3d tcos, tsin;
+    double eta;
     if(rd*n < 0){
     eta = etai/etat;
     n = -n;
@@ -264,11 +264,11 @@ void runRayTracerKernel(Scene_d scene, int depth){
     eta = etat/etai;
     }
     tsin = eta*rsin;
-    float TIR = 1 - tsin*tsin;
+    double TIR = 1 - tsin*tsin;
     if(TIR >= 0){
     tcos = n*sqrt(TIR);
-    Vec3f Tdir = tcos + tsin;
-    Vec3f q = r.at(i.t);
+    Vec3d Tdir = tcos + tsin;
+    Vec3d q = r.at(i.t);
     normalize(Tdir);
 
     //Put DRT stuff HERE
