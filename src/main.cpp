@@ -226,12 +226,14 @@ int main(int argc, char* argv[])
         break;
       case WIDTH:
         {  
+           fprintf(stdout, "--width with argument '%s'\n", opt.arg);
            temp = opt.arg;
            width = stoi(temp, &sz);
         }
         break;
       case HEIGHT:
         {
+           fprintf(stdout, "--height with argument '%s'\n", opt.arg);
            temp = opt.arg;
            height = stoi(temp, &sz);
         }
