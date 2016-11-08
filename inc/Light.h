@@ -25,7 +25,7 @@ struct Light_h{
 
 
     __host__ __device__
-    Light_h(): color(1.0, 1.0, 1.0), position(1.0,1.0,1.0), orientation(.5, -1, -1), width(1) {} 
+    Light_h(): color(1.0, 1.0, 1.0), position(1.0,1.0,1.0), orientation(.5, -1, -1), width(1), height(1), radius(1), constantTerm(0), linearTerm(0), quadraticTerm(0.01) {} 
 };
 // Currently a Directional Light
 class Light {
@@ -73,9 +73,10 @@ class Light {
                 orientation = light.orientation ;
                 width       = light.width       ;
                 height      = light.height      ;
-                constantTerm = 0.0;
-                linearTerm = 0.0;
-                quadraticTerm = 0.01;
+                radius      = light.radius      ;
+                constantTerm =light.constantTerm;
+                linearTerm  = light.linearTerm  ;
+                quadraticTerm =light.quadraticTerm;
 
             }
 

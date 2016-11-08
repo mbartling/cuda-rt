@@ -1,4 +1,5 @@
 #include "scene.h"
+#include "debug.h"
 #include <stdio.h>
 #include <thrust/device_vector.h>
 #include <thrust/device_ptr.h>
@@ -61,7 +62,7 @@ void AverageSuperSampling(Vec3d* smallImage,
                           int imageHeight, 
                           int superSampling)
 {
-    int blockSize = 32;
+    int blockSize = 16;
     dim3 blockDim(blockSize, blockSize); //A thread block is 32x32 pixels
     dim3 gridDim(imageWidth/blockDim.x, imageHeight/blockDim.y);
     AverageSuperSamplingKernel<<<gridDim, blockDim>>>(smallImage, deviceImage, imageWidth, imageHeight, superSampling);
@@ -90,15 +91,15 @@ void computeBoundingBoxes_kernel(int numTriangles, Vec3d* vertices, TriangleIndi
     if (idx >= numTriangles) return;
 
     TriangleIndices t_idx = t_indices[idx];
-    printf("idx(%d), a(%0.6f, %0.6f, %0.6f)\n" , idx, vertices[t_idx.a.vertex_index].x,
+    printf_DEBUG("idx(%d), a(%0.6f, %0.6f, %0.6f)\n" , idx, vertices[t_idx.a.vertex_index].x,
                                      vertices[t_idx.a.vertex_index].y,
                                      vertices[t_idx.a.vertex_index].z);
 
-    printf("idx(%d), b(%0.6f, %0.6f, %0.6f)\n" , idx, vertices[t_idx.b.vertex_index].x,
+    printf_DEBUG("idx(%d), b(%0.6f, %0.6f, %0.6f)\n" , idx, vertices[t_idx.b.vertex_index].x,
                                      vertices[t_idx.b.vertex_index].y,
                                      vertices[t_idx.b.vertex_index].z);
 
-    printf("idx(%d), c(%0.6f, %0.6f, %0.6f)\n" , idx, vertices[t_idx.c.vertex_index].x,
+    printf_DEBUG("idx(%d), c(%0.6f, %0.6f, %0.6f)\n" , idx, vertices[t_idx.c.vertex_index].x,
                                      vertices[t_idx.c.vertex_index].y,
                                      vertices[t_idx.c.vertex_index].z);
 
@@ -149,7 +150,7 @@ void AverageSuperSamplingKernel(Vec3d* smallImage, Vec3d* deviceImage, int image
         }
     }
 
-    //printf("idx = %d, mSum=%f,%f,%f\n", pixelIdx, mSum.x, mSum.y, mSum.z);
+    //printf_DEBUG("idx = %d, mSum=%f,%f,%f\n", pixelIdx, mSum.x, mSum.y, mSum.z);
     mSum /= double(superSampling);
     smallImage[pixelIdx] = mSum;
 }
