@@ -74,18 +74,49 @@ void runRayTracerKernelRec(Scene_d* scene, int depth){
     //y += randy; //in [0,1]
     //           ray r;
     //           scene->getCamera()->rayThrough(x, y, r);
-    double invWidth = 1.0 / double(scene->imageWidth), invHeight = 1.0 / double(scene->imageHeight);
-    double fov = 30, aspectratio = double(scene->imageWidth) / double(scene->imageHeight);
+/*    double invWidth = 1.0 / double(scene->imageWidth), invHeight = 1.0 / double(scene->imageHeight);
+    double fov = 35, aspectratio = double(scene->imageWidth) / double(scene->imageHeight);
     double angle = tan(M_PI * 0.5 * fov / 180.0f);
     double xx = (2 * ((px + 0.5) * invWidth) - 1)*angle*aspectratio;
     double yy = (1 - 2 * ((py + 0.5) * invHeight)) * angle;
-    ray r(Vec3d(0.0,0.0,0.0), Vec3d(xx, yy, -1));
+    double focalDistance = 0.0433/(2.0*angle);
+    //double focalDistance = 70.0/1000.0;
+    double focalPoint = 7;
+    //double lenseDistance = 1.0/(1.0/focalDistance - 1.0/focusPoint); //Doesnt matter
+    double dofAngle = 2*M_PI*randDouble(scene->seeds);
+    double dofRadius = scene->getCamera()->getAperature()*focalDistance * sqrt(randDouble(scene->seeds)) / 2.0;
+    Vec3d origin(dofRadius*cos(dofAngle), dofRadius*sin(dofAngle), 0);
+    //ray r(Vec3d(0.0,0.0,0.0), Vec3d(xx, yy, -1));
+    ray r(origin, Vec3d(xx, yy, 1.0));
+    r.d = origin - normalize(r.d)*focalPoint;
     normalize(r.d);
-    printf_DEBUG("RAY %d, p=(%f,%f,%f), d=(%f,%f,%f)\n", idx, r.p.x, r.p.y, r.p.z, r.d.x, r.d.y, r.d.z);
+  */ 
+    double invWidth = 1.0 / double(scene->imageWidth), invHeight = 1.0 / double(scene->imageHeight);
+    double fov = 35, aspectratio = double(scene->imageWidth) / double(scene->imageHeight);
+    double focalPoint = 7;
+    double angle = tan(M_PI * 0.5 * fov / 180.0f);
+    double xx = (2 * ((px + 0.5) * invWidth) - 1)*angle*aspectratio;
+    double yy = (1 - 2 * ((py + 0.5) * invHeight)) * angle;
+    double focalDistance = 0.0433/(2.0*angle);
     Vec3d colorC;
-    //printf_DEBUG("Attempting to trace ray\n");
-    colorC = traceRay(scene, r, depth);
+    int N = 5;
+    //double focalDistance = 70.0/1000.0;
+    //double lenseDistance = 1.0/(1.0/focalDistance - 1.0/focusPoint); //Doesnt matter
+    for(int iter = 0; iter < N; iter++){
+    double dofAngle = 2*M_PI*randDouble(scene->seeds);
+    double dofRadius = scene->getCamera()->getAperature() * sqrt(randDouble(scene->seeds)) / 2.0;
+    Vec3d origin(dofRadius*cos(dofAngle), dofRadius*sin(dofAngle), 0);
+    //ray r(Vec3d(0.0,0.0,0.0), Vec3d(xx, yy, -1));
+    ray r(origin, Vec3d(xx, yy, -1.0));
 
+    r.d = normalize(r.d)*focalPoint - origin;
+    normalize(r.d);
+    
+    printf_DEBUG("RAY %d, p=(%f,%f,%f), d=(%f,%f,%f)\n", idx, r.p.x, r.p.y, r.p.z, r.d.x, r.d.y, r.d.z);
+    //printf_DEBUG("Attempting to trace ray\n");
+    colorC += traceRay(scene, r, depth);
+    }
+    colorC /= double(N);
     scene->image[idx] = colorC;
 
 }

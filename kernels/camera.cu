@@ -10,12 +10,12 @@ __host__ __device__
 Camera::Camera(){
     aspectRatio = 1;
     normalizedHeight = 1;
-
+    
     eye = Vec3d(0.f,0.f,0.f);
     u = Vec3d(1.f,0.f,0.f);
     v = Vec3d(0.f,1.f,0.f);
     look = Vec3d(0.f,0.f,-1.f);
-    aperature = 1;
+    fstop = 22.0;
     fov  = 30;
 }
 
@@ -40,9 +40,6 @@ Camera::setEye(const Vec3d &eye)
     this->eye = eye;
 }
 
-__host__ __device__
-void 
-Camera::setAperature(double a){ aperature = a; }
 
 __host__ __device__
     void
