@@ -52,6 +52,8 @@ class BVH_d {
         Material* materials;
         int* material_ids;       
 
+        __device__
+            Node* getRoot(){ return &internalNodes[0];}
 
     public:
 
@@ -134,27 +136,75 @@ class BVH_d {
                 bool intersect(const ray& r, isect& i){
                     bool haveOne = false;
                     isect* cur = new isect();
-                    //printf("HERE\n");
-                    for(int j = 0; j < numTriangles; j++){
-                        if(intersectTriangle(r, *cur, object_ids[j])){
-                            if(!haveOne || (cur->t < i.t)){
-                                //printf("FOUND ONE t=%f\n",cur->t);
-                                i = *cur;
-                                haveOne = true;
+
+                    // Allocate traversal stack from thread-local memory,
+                    // and push NULL to indicate that there are no postponed nodes.
+                    Node* stack[64];
+                    Node* stackPtr = stack;
+                    *stackPtr++ = NULL; // push
+
+                    // Traverse nodes starting from the root.
+                    Node* node = getRoot();
+                    do
+                    {
+                        // Check each child node for overlap.
+                        Node* childL = node->childA;
+                        Node* childR = node->childB;
+                        double tMinA;
+                        double tMaxA;
+                        double tMinB;
+                        double tMaxB;
+                        bool overlapL = childL->BBox.intersect(r, tMinA, tMaxA);
+                        bool overlapR = childR->BBox.intersect(r, tMinB, tMaxB);
+
+                        // Query overlaps a leaf node => check intersect
+                        if (overlapL && childL->isLeaf)
+                        {
+                            if(intersectTriangle(r, *cur, childL->object_id)){
+                                if(!haveOne || (cur->t < i.t)){
+                                    //printf("FOUND ONE t=%f\n",cur->t);
+                                    i = *cur;
+                                    haveOne = true;
+                                }
                             }
                         }
-                    }
-                if(!haveOne) i.t = 1000.0;
-                delete cur;
-                //printf("Closest is %d, %f\n", i.object_id, i.t);
-                return haveOne;
 
+                        if (overlapR && childR->isLeaf)
+                        {
+                            if(intersectTriangle(r, *cur, childR->object_id)){
+                                if(!haveOne || (cur->t < i.t)){
+                                    //printf("FOUND ONE t=%f\n",cur->t);
+                                    i = *cur;
+                                    haveOne = true;
+                                }
+                            }
+                        }
+
+                        // Query overlaps an internal node => traverse.
+                        bool traverseL = (overlapL && !childL->isLeaf);
+                        bool traverseR = (overlapR && !childR->isLeaf);
+
+                        if (!traverseL && !traverseR)
+                            node = *--stackPtr; // pop
+                        else
+                        {
+                            node = (traverseL) ? childL : childR;
+                            if (traverseL && traverseR)
+                                *stackPtr++ = childR; // push
+                        }
+                    }
+                    while (node != NULL);
+                    if(!haveOne) i.t = 1000.0;
+                    delete cur;
+                    //printf("Closest is %d, %f\n", i.object_id, i.t);
+                    return haveOne;
                 }
+
 
 
 
             };
 
-           class Scene_h;
-           void bvh(Scene_h& scene_h);
+        class Scene_h;
+        void bvh(Scene_h& scene_h);
 
