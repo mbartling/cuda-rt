@@ -74,8 +74,8 @@ class Light {
                 width       = light.width       ;
                 height      = light.height      ;
                 constantTerm = 0.0;
-                linearTerm = 0.01;
-                quadraticTerm = 0.001;
+                linearTerm = 0.0;
+                quadraticTerm = 0.01;
 
             }
 
