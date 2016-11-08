@@ -20,6 +20,8 @@ class Camera
         void setFOV( double );
         __host__ __device__
         void setAspectRatio( double );
+        __host__ __device__
+        void setAperature( double );
 
         __host__ __device__
         double getAspectRatio() { return aspectRatio; }
@@ -32,6 +34,8 @@ class Camera
         const Vec3d& getU() const           { return u; }
         __host__ __device__
         const Vec3d& getV() const           { return v; }
+        __host__ __device__
+        const Vec3d& getAperature() const           { return aperature; }
     private:
         Mat3d m;                     // rotation matrix
         double normalizedHeight;    // dimensions of image place at unit dist from eye
@@ -43,6 +47,8 @@ class Camera
         Vec3d eye;
         Vec3d look;                  // direction to look
         Vec3d u,v;                   // u and v in the 
+
+        double aperature;
 };
 
 #endif

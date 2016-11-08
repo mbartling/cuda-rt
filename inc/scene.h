@@ -82,6 +82,8 @@ class Scene_d{
         Light* light;
         Camera* camera;
 
+        uint32_t* seeds;
+
         friend class Scene_h;
     public:
 

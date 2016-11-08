@@ -15,6 +15,7 @@ Camera::Camera(){
     u = Vec3d(1.f,0.f,0.f);
     v = Vec3d(0.f,1.f,0.f);
     look = Vec3d(0.f,0.f,-1.f);
+    aperature = 1;
 }
 
 __host__ __device__
@@ -37,6 +38,10 @@ Camera::setEye(const Vec3d &eye)
 {
     this->eye = eye;
 }
+
+__host__ __device__
+void 
+Camera::setAperature(double a){ aperature = a; }
 
 __host__ __device__
     void

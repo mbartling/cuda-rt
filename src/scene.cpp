@@ -25,7 +25,7 @@ void Scene_h::LoadObj(string filename, string mtl_basepath){
         mat.ks = Vec3d(material[m].specular);
         mat.kt = Vec3d(material[m].transmittance);
         mat.ke = Vec3d(material[m].emission);
-        mat.kr = Vec3d(material[m].specular);
+        mat.kr = Vec3d(material[m].specular); //Hack
         mat.shininess = material[m].shininess;
         mat.ior = material[m].ior;
         mat.dissolve = material[m].dissolve;
@@ -85,6 +85,7 @@ Scene_d& Scene_d::operator = (const Scene_h& hostScene){
 
     cudaMalloc(&image, imageWidth*imageHeight*sizeof(Vec3d));
     cudaMalloc(&camera, sizeof(Camera));
+    cudaMalloc(&seeds, imageWidth*imageHeight*sizeof(uint32_t));
 
     //Copy stuff
     cudaMemcpy(vertices, hostScene.mAttributes.vertices.data(), numVertices*sizeof(Vec3d), cudaMemcpyHostToDevice);
@@ -115,5 +116,7 @@ Scene_d::~Scene_d(){
     cudaFree(BBoxs);
     cudaFree(t_indices);
     cudaFree(image);
+    cudaFree(camera);
+    cudaFree(seeds);
 }
 

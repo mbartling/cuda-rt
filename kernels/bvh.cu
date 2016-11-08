@@ -3,10 +3,12 @@
 #include <thrust/sort.h>
 #include <thrust/device_ptr.h>
 #include "scene.h"
+#include "debug.h"
+
 
 __global__ void hello()
 {
-    printf("Hello world! I'm a thread in block %d\n", blockIdx.x);
+    printf_DEBUG("Hello world! I'm a thread in block %d\n", blockIdx.x);
 
 }
 // Expands a 10-bit integer into 30 bits
@@ -83,10 +85,10 @@ void bvh(Scene_h& scene_h)
     //launch the kernel
     hello<<<NUM_BLOCKS, BLOCK_WIDTH>>>();
 
-    //force the printf()s to flush
+    //force the printf_DEBUG()s to flush
     cudaDeviceSynchronize();
 
-    printf("That's all!\n");
+    printf_DEBUG("That's all!\n");
 
 }
 
@@ -107,7 +109,7 @@ void computeMortonCodesKernel(unsigned int* mortonCodes, unsigned int* object_id
     centroid.z = (centroid.z - mMin.z)/(mMax.z - mMin.z);
     //map this centroid to unit cube
     mortonCodes[idx] = morton3D(centroid.x, centroid.y, centroid.z);
-    printf("in computeMortonCodesKernel: idx->%d , mortonCode->%d, centroid(%0.6f,%0.6f,%0.6f)\n", idx, mortonCodes[idx], centroid.x, centroid.y, centroid.z);
+    printf_DEBUG("in computeMortonCodesKernel: idx->%d , mortonCode->%d, centroid(%0.6f,%0.6f,%0.6f)\n", idx, mortonCodes[idx], centroid.x, centroid.y, centroid.z);
 
 };
 
@@ -289,7 +291,7 @@ int2 determineRange(unsigned int* sortedMortonCodes, int numTriangles, int idx)
         right = idx;
     }
 
-    printf("idx : (%d) returning range (%d, %d) \n" , idx , left, right);
+    printf_DEBUG("idx : (%d) returning range (%d, %d) \n" , idx , left, right);
 
     return make_int2(left,right);
 }
