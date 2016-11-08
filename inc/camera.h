@@ -35,7 +35,7 @@ class Camera
         __host__ __device__
         const Vec3d& getV() const           { return v; }
         __host__ __device__
-        const Vec3d& getAperature() const           { return aperature; }
+        double getAperature() const           { return aperature; }
     private:
         Mat3d m;                     // rotation matrix
         double normalizedHeight;    // dimensions of image place at unit dist from eye
@@ -49,6 +49,7 @@ class Camera
         Vec3d u,v;                   // u and v in the 
 
         double aperature;
+        double fov;
 };
 
 #endif

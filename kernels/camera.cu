@@ -16,6 +16,7 @@ Camera::Camera(){
     v = Vec3d(0.f,1.f,0.f);
     look = Vec3d(0.f,0.f,-1.f);
     aperature = 1;
+    fov  = 30;
 }
 
 __host__ __device__
