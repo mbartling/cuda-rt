@@ -140,7 +140,7 @@ class BVH_d {
                     // Allocate traversal stack from thread-local memory,
                     // and push NULL to indicate that there are no postponed nodes.
                     Node* stack[64];
-                    Node* stackPtr = stack;
+                    Node** stackPtr = stack;
                     *stackPtr++ = NULL; // push
 
                     // Traverse nodes starting from the root.
@@ -160,7 +160,7 @@ class BVH_d {
                         // Query overlaps a leaf node => check intersect
                         if (overlapL && childL->isLeaf)
                         {
-                            if(intersectTriangle(r, *cur, childL->object_id)){
+                            if(intersectTriangle(r, *cur, ((LeafNode*)childL)->object_id)){
                                 if(!haveOne || (cur->t < i.t)){
                                     //printf("FOUND ONE t=%f\n",cur->t);
                                     i = *cur;
@@ -171,7 +171,7 @@ class BVH_d {
 
                         if (overlapR && childR->isLeaf)
                         {
-                            if(intersectTriangle(r, *cur, childR->object_id)){
+                            if(intersectTriangle(r, *cur, ((LeafNode*)childR)->object_id)){
                                 if(!haveOne || (cur->t < i.t)){
                                     //printf("FOUND ONE t=%f\n",cur->t);
                                     i = *cur;
