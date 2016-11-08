@@ -35,6 +35,8 @@ class RayTracer{
         
         RayTracer(int imageWidth, int imageHeight, int superSampling): imageWidth(512), imageHeight(512), superSampling(1), hostScene(imageWidth, imageHeight, superSampling), depth(1)
         {
+		this->imageWidth = imageWidth;
+		this->imageHeight = imageHeight;
                 image = new RGB[imageWidth*imageHeight];
                 hostLight.position = Vec3d(1.0, 1.0, 1.0);
                 hostLight.orientation = Vec3d(10.0, 10.0, -10.0);
