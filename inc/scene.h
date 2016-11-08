@@ -30,7 +30,7 @@ class Scene_h{
     private:
         // Host Side
         attrib_t mAttributes;
-        vector<Vec3f> image;
+        vector<Vec3d> image;
         vector<TriangleIndices> t_indices;
         vector<int> material_ids;
         vector<Material> materials;
@@ -48,7 +48,7 @@ class Scene_h{
         Scene_h(int imageWidth, int imageHeight, int superSampling): imageWidth(imageWidth), imageHeight(imageHeight), superSampling(superSampling) {}
 
         void LoadObj(string filename, string mtl_basepath);
-        vector<Vec3f> getImage() const {return image;}
+        vector<Vec3d> getImage() const {return image;}
 
         Scene_h& operator = (const Scene_d& deviceScene); //Copy image from the device
         void setCamera(Camera* _camera){camera = _camera; }
@@ -65,9 +65,9 @@ class Scene_d{
         int numTriangles;
         int numMaterials;
 
-        Vec3f* vertices;
-        Vec3f* normals;
-        Vec3f* texcoords;
+        Vec3d* vertices;
+        Vec3d* normals;
+        Vec3d* texcoords;
 
         Material* materials;
         int* material_ids;
@@ -76,7 +76,7 @@ class Scene_d{
 
         TriangleIndices* t_indices;
 
-        Vec3f* image;
+        Vec3d* image;
         BVH_d bvh;
 
         Light* light;
@@ -88,7 +88,7 @@ class Scene_d{
         Scene_d& operator = (const Scene_h& hostScene); //Copy Triangles, materials, etc to the device
     
         void computeBoundingBoxes();
-        void findMinMax(Vec3f& mMin, Vec3f& mMax);
+        void findMinMax(Vec3d& mMin, Vec3d& mMax);
 
         __device__
         bool intersect(const ray& r, isect& i){ //Find the closest point of intersection
@@ -102,8 +102,11 @@ class Scene_d{
         __device__
         Camera* getCamera() { return camera; }
 
+        __device__
+        Vec3d ambient() const {return Vec3d(0.0,0.0,0.0);}
+
         ~Scene_d();
 
 };
 
-void AverageSuperSampling(Vec3f* smallImage, Vec3f* deviceImage, int imageWidth, int imageHeight, int superSampling);
+void AverageSuperSampling(Vec3d* smallImage, Vec3d* deviceImage, int imageWidth, int imageHeight, int superSampling);

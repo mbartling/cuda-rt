@@ -9,40 +9,40 @@ class Camera
         __host__ __device__
         Camera();
         __host__ __device__
-        void rayThrough( float x, float y, ray &r );
+        void rayThrough( double x, double y, ray &r );
         __host__ __device__
-        void setEye( const Vec3f &eye );
+        void setEye( const Vec3d &eye );
         __host__ __device__
-        void setLook( float, float, float, float );
+        void setLook( double, double, double, double );
         __host__ __device__
-        void setLook( const Vec3f &viewDir, const Vec3f &upDir );
+        void setLook( const Vec3d &viewDir, const Vec3d &upDir );
         __host__ __device__
-        void setFOV( float );
+        void setFOV( double );
         __host__ __device__
-        void setAspectRatio( float );
+        void setAspectRatio( double );
 
         __host__ __device__
-        float getAspectRatio() { return aspectRatio; }
+        double getAspectRatio() { return aspectRatio; }
 
         __host__ __device__
-        const Vec3f& getEye() const         { return eye; }
+        const Vec3d& getEye() const         { return eye; }
         __host__ __device__
-        const Vec3f& getLook() const        { return look; }
+        const Vec3d& getLook() const        { return look; }
         __host__ __device__
-        const Vec3f& getU() const           { return u; }
+        const Vec3d& getU() const           { return u; }
         __host__ __device__
-        const Vec3f& getV() const           { return v; }
+        const Vec3d& getV() const           { return v; }
     private:
-        Mat3f m;                     // rotation matrix
-        float normalizedHeight;    // dimensions of image place at unit dist from eye
-        float aspectRatio;
+        Mat3d m;                     // rotation matrix
+        double normalizedHeight;    // dimensions of image place at unit dist from eye
+        double aspectRatio;
 
         __host__ __device__
         void update();              // using the above three values calculate look,u,v
 
-        Vec3f eye;
-        Vec3f look;                  // direction to look
-        Vec3f u,v;                   // u and v in the 
+        Vec3d eye;
+        Vec3d look;                  // direction to look
+        Vec3d u,v;                   // u and v in the 
 };
 
 #endif

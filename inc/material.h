@@ -9,15 +9,15 @@ class isect;
 class Light;
 
 struct Material {
-    Vec3f ka; //Ambient
-    Vec3f kd; //diffuse
-    Vec3f ks; //specular
-    Vec3f kt; //Transmittance
-    Vec3f ke; //Emmission
-    Vec3f kr; //reflectance == specular
-    float shininess;
-    float ior;
-    float dissolve; // 1 == opaque; 0 == fully transparent
+    Vec3d ka; //Ambient
+    Vec3d kd; //diffuse
+    Vec3d ks; //specular
+    Vec3d kt; //Transmittance
+    Vec3d ke; //Emmission
+    Vec3d kr; //reflectance == specular
+    double shininess;
+    double ior;
+    double dissolve; // 1 == opaque; 0 == fully transparent
 
     bool _refl;								  // specular reflector?
     bool _trans;							  // specular transmitter?
@@ -43,37 +43,7 @@ struct Material {
         }
 
     __device__
-        Vec3f shade(Scene_d* scene, const ray& r, const isect& i) const {
- //           Vec3f I = ke + (ka % scene->ambient());
-            Vec3f I = kd;
-
- //           Vec3f V = scene->getCamera().getEye() - r.at(i.t) ;
- //           V = -V;
- //           normalize(V);
-
- //           AreaLight* pLight  = scene->getLight();
- //           Vec3f lightDir = pLight->getDirection(r.at(i.t));
- //           ray toLightR(r.at(i.t), lightDir);
-
-
- //           Vec3f atten    = pLight->distanceAttenuation(r.at(i.t)) * pLight->shadowAttenuation(toLightR, r.at(i.t));
- //           // Vec3f atten    = Vec3f() * pLight->shadowAttenuation(toLightR, r.at(i.t));
- //           float blah = i.N*lightDir;
- //           if(blah< 0) blah = 0;
- //           Vec3f diffuseTerm  = blah*kd;
- //           // Vec3f diffuseTerm  = maximum(Vec3f(0,0,0), i.N*lightDir*kd);
-
-
- //           Vec3f Rdir = -2.0*(lightDir*i.N)*i.N + lightDir;
- //           normalize(Rdir); 
- //           float tmp = Rdir*V;
-
- //           tmp =  powf(max(0.0, tmp), shininess);
- //           Vec3f specularTerm = tmp * ks;
- //           I += atten % ( diffuseTerm + specularTerm) % pLight->getColor();
-            return I;
-            // return kd;
-        }
+        Vec3d shade(Scene_d* scene, const ray& r, const isect& i) const ;
     __device__
         Material& operator += (const Material& m){
             ke += m.ke;
@@ -90,13 +60,13 @@ struct Material {
         }
 
     friend __device__ __inline__
-        Material operator*(float d, Material m);
+        Material operator*(double d, Material m);
 
 
 };
 
 __device__ __inline__
-Material operator*(float d, Material m){
+Material operator*(double d, Material m){
     m.ke *= d;
     m.ka *= d;
     m.ks *= d;

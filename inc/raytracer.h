@@ -27,19 +27,19 @@ class RayTracer{
         RayTracer(): imageWidth(512), imageHeight(512), superSampling(1), hostScene(imageWidth, imageHeight, superSampling), depth(1)
         {
                 image = new RGB[imageWidth*imageHeight];
-                hostLight.position = Vec3f(10.0, 10.0, 10.0);
-                hostLight.orientation = Vec3f(10.0, 10.0, 10.0);
+                hostLight.position = Vec3d(1.0, 1.0, 1.0);
+                hostLight.orientation = Vec3d(10.0, 10.0, -10.0);
                 normalize(hostLight.orientation);
-                hostLight.color = Vec3f(1.0, 1.0, 1.0);
+                hostLight.color = Vec3d(1.0, 1.0, 1.0);
         }
         
         RayTracer(int imageWidth, int imageHeight, int superSampling): imageWidth(512), imageHeight(512), superSampling(1), hostScene(imageWidth, imageHeight, superSampling), depth(1)
         {
                 image = new RGB[imageWidth*imageHeight];
-                hostLight.position = Vec3f(10.0, 10.0, 10.0);
-                hostLight.orientation = Vec3f(10.0, 10.0, 10.0);
+                hostLight.position = Vec3d(1.0, 1.0, 1.0);
+                hostLight.orientation = Vec3d(10.0, 10.0, -10.0);
                 normalize(hostLight.orientation);
-                hostLight.color = Vec3f(1.0, 1.0, 1.0);
+                hostLight.color = Vec3d(1.0, 1.0, 1.0);
         }
 
         void LoadObj(string filename, string mtl_basepath){ hostScene.LoadObj(filename, mtl_basepath); }
@@ -52,7 +52,7 @@ class RayTracer{
         
         void pullRaytracedImage(){ 
             hostScene = deviceScene; 
-            vector<Vec3f> hostSceneImage = hostScene.getImage();
+            vector<Vec3d> hostSceneImage = hostScene.getImage();
             printf("imageSize %d\n", hostSceneImage.size());
             for(int i = 0; i < hostSceneImage.size(); i++){
                 image[i].r = (unsigned char)(255.0 * hostSceneImage[i].x);

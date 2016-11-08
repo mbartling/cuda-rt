@@ -45,14 +45,14 @@ namespace tinyobj {
 typedef struct {
   std::string name;
 
-  float ambient[3];
-  float diffuse[3];
-  float specular[3];
-  float transmittance[3];
-  float emission[3];
-  float shininess;
-  float ior;       // index of refraction
-  float dissolve;  // 1 == opaque; 0 == fully transparent
+  double ambient[3];
+  double diffuse[3];
+  double specular[3];
+  double transmittance[3];
+  double emission[3];
+  double shininess;
+  double ior;       // index of refraction
+  double dissolve;  // 1 == opaque; 0 == fully transparent
   // illumination model (see http://www.fileformat.info/format/material/)
   int illum;
 
@@ -68,13 +68,13 @@ typedef struct {
 
   // PBR extension
   // http://exocortex.com/blog/extending_wavefront_mtl_to_support_pbr
-  float roughness;                // [0, 1] default 0
-  float metallic;                 // [0, 1] default 0
-  float sheen;                    // [0, 1] default 0
-  float clearcoat_thickness;      // [0, 1] default 0
-  float clearcoat_roughness;      // [0, 1] default 0
-  float anisotropy;               // aniso. [0, 1] default 0
-  float anisotropy_rotation;      // anisor. [0, 1] default 0
+  double roughness;                // [0, 1] default 0
+  double metallic;                 // [0, 1] default 0
+  double sheen;                    // [0, 1] default 0
+  double clearcoat_thickness;      // [0, 1] default 0
+  double clearcoat_roughness;      // [0, 1] default 0
+  double anisotropy;               // aniso. [0, 1] default 0
+  double anisotropy_rotation;      // anisor. [0, 1] default 0
   std::string roughness_texname;  // map_Pr
   std::string metallic_texname;   // map_Pm
   std::string sheen_texname;      // map_Ps
@@ -88,7 +88,7 @@ typedef struct {
   std::string name;
 
   std::vector<int> intValues;
-  std::vector<float> floatValues;
+  std::vector<double> doubleValues;
   std::vector<std::string> stringValues;
 } tag_t;
 
@@ -116,19 +116,19 @@ typedef struct {
 
 // Vertex attributes
 typedef struct {
-  std::vector<float> vertices;   // 'v'
-  std::vector<float> normals;    // 'vn'
-  std::vector<float> texcoords;  // 'vt'
+  std::vector<double> vertices;   // 'v'
+  std::vector<double> normals;    // 'vn'
+  std::vector<double> texcoords;  // 'vt'
 } attrib_t;
 
 typedef struct callback_t_ {
   // W is optional and set to 1 if there is no `w` item in `v` line
-  void (*vertex_cb)(void *user_data, float x, float y, float z, float w);
-  void (*normal_cb)(void *user_data, float x, float y, float z);
+  void (*vertex_cb)(void *user_data, double x, double y, double z, double w);
+  void (*normal_cb)(void *user_data, double x, double y, double z);
 
   // y and z are optional and set to 0 if there is no `y` and/or `z` item(s) in
   // `vt` line.
-  void (*texcoord_cb)(void *user_data, float x, float y, float z);
+  void (*texcoord_cb)(void *user_data, double x, double y, double z);
 
   // called per 'f' line. num_indices is the number of face indices(e.g. 3 for
   // triangle, 4 for quad)
@@ -259,16 +259,16 @@ struct vertex_index {
 };
 
 struct tag_sizes {
-  tag_sizes() : num_ints(0), num_floats(0), num_strings(0) {}
+  tag_sizes() : num_ints(0), num_doubles(0), num_strings(0) {}
   int num_ints;
-  int num_floats;
+  int num_doubles;
   int num_strings;
 };
 
 struct obj_shape {
-  std::vector<float> v;
-  std::vector<float> vn;
-  std::vector<float> vt;
+  std::vector<double> v;
+  std::vector<double> vn;
+  std::vector<double> vt;
 };
 
 // See
@@ -331,7 +331,7 @@ static inline int parseInt(const char **token) {
   return i;
 }
 
-// Tries to parse a floating point number located at s.
+// Tries to parse a doubleing point number located at s.
 //
 // s_end should be a location in the string where reading should absolutely
 // stop. For example at the end of the string, to prevent buffer overflows.
@@ -342,7 +342,7 @@ static inline int parseInt(const char **token) {
 //   digit   = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
 //   integer = [sign] , digit , {digit} ;
 //   decimal = integer , ["." , integer] ;
-//   float   = ( decimal , END ) | ( decimal , ("E" | "e") , integer , END ) ;
+//   double   = ( decimal , END ) | ( decimal , ("E" | "e") , integer , END ) ;
 //
 //  Valid strings are for example:
 //   -0  +3.1417e+2  -0.0E-3  1.0324  -1.41   11e2
@@ -466,29 +466,29 @@ fail:
   return false;
 }
 
-static inline float parseFloat(const char **token, double default_value = 0.0) {
+static inline double parseFloat(const char **token, double default_value = 0.0) {
   (*token) += strspn((*token), " \t");
   const char *end = (*token) + strcspn((*token), " \t\r");
   double val = default_value;
   tryParseDouble((*token), end, &val);
-  float f = static_cast<float>(val);
+  double f = static_cast<double>(val);
   (*token) = end;
   return f;
 }
 
-static inline void parseFloat2(float *x, float *y, const char **token) {
+static inline void parseFloat2(double *x, double *y, const char **token) {
   (*x) = parseFloat(token);
   (*y) = parseFloat(token);
 }
 
-static inline void parseFloat3(float *x, float *y, float *z,
+static inline void parseFloat3(double *x, double *y, double *z,
                                const char **token) {
   (*x) = parseFloat(token);
   (*y) = parseFloat(token);
   (*z) = parseFloat(token);
 }
 
-static inline void parseV(float *x, float *y, float *z, float *w,
+static inline void parseV(double *x, double *y, double *z, double *w,
                           const char **token) {
   (*x) = parseFloat(token);
   (*y) = parseFloat(token);
@@ -506,7 +506,7 @@ static tag_sizes parseTagTriple(const char **token) {
   }
   (*token)++;
 
-  ts.num_floats = atoi((*token));
+  ts.num_doubles = atoi((*token));
   (*token) += strcspn((*token), "/ \t\r");
   if ((*token)[0] != '/') {
     return ts;
@@ -753,7 +753,7 @@ void LoadMtl(std::map<std::string, int> *material_map,
     // ambient
     if (token[0] == 'K' && token[1] == 'a' && IS_SPACE((token[2]))) {
       token += 2;
-      float r, g, b;
+      double r, g, b;
       parseFloat3(&r, &g, &b, &token);
       material.ambient[0] = r;
       material.ambient[1] = g;
@@ -764,7 +764,7 @@ void LoadMtl(std::map<std::string, int> *material_map,
     // diffuse
     if (token[0] == 'K' && token[1] == 'd' && IS_SPACE((token[2]))) {
       token += 2;
-      float r, g, b;
+      double r, g, b;
       parseFloat3(&r, &g, &b, &token);
       material.diffuse[0] = r;
       material.diffuse[1] = g;
@@ -775,7 +775,7 @@ void LoadMtl(std::map<std::string, int> *material_map,
     // specular
     if (token[0] == 'K' && token[1] == 's' && IS_SPACE((token[2]))) {
       token += 2;
-      float r, g, b;
+      double r, g, b;
       parseFloat3(&r, &g, &b, &token);
       material.specular[0] = r;
       material.specular[1] = g;
@@ -787,7 +787,7 @@ void LoadMtl(std::map<std::string, int> *material_map,
     if ((token[0] == 'K' && token[1] == 't' && IS_SPACE((token[2]))) ||
         (token[0] == 'T' && token[1] == 'f' && IS_SPACE((token[2])))) {
       token += 2;
-      float r, g, b;
+      double r, g, b;
       parseFloat3(&r, &g, &b, &token);
       material.transmittance[0] = r;
       material.transmittance[1] = g;
@@ -805,7 +805,7 @@ void LoadMtl(std::map<std::string, int> *material_map,
     // emission
     if (token[0] == 'K' && token[1] == 'e' && IS_SPACE(token[2])) {
       token += 2;
-      float r, g, b;
+      double r, g, b;
       parseFloat3(&r, &g, &b, &token);
       material.emission[0] = r;
       material.emission[1] = g;
@@ -1077,9 +1077,9 @@ bool LoadObj(attrib_t *attrib, std::vector<shape_t> *shapes,
              bool triangulate) {
   std::stringstream errss;
 
-  std::vector<float> v;
-  std::vector<float> vn;
-  std::vector<float> vt;
+  std::vector<double> v;
+  std::vector<double> vn;
+  std::vector<double> vt;
   std::vector<tag_t> tags;
   std::vector<std::vector<vertex_index> > faceGroup;
   std::string name;
@@ -1121,7 +1121,7 @@ bool LoadObj(attrib_t *attrib, std::vector<shape_t> *shapes,
     // vertex
     if (token[0] == 'v' && IS_SPACE((token[1]))) {
       token += 2;
-      float x, y, z;
+      double x, y, z;
       parseFloat3(&x, &y, &z, &token);
       v.push_back(x);
       v.push_back(y);
@@ -1132,7 +1132,7 @@ bool LoadObj(attrib_t *attrib, std::vector<shape_t> *shapes,
     // normal
     if (token[0] == 'v' && token[1] == 'n' && IS_SPACE((token[2]))) {
       token += 3;
-      float x, y, z;
+      double x, y, z;
       parseFloat3(&x, &y, &z, &token);
       vn.push_back(x);
       vn.push_back(y);
@@ -1143,7 +1143,7 @@ bool LoadObj(attrib_t *attrib, std::vector<shape_t> *shapes,
     // texcoord
     if (token[0] == 'v' && token[1] == 't' && IS_SPACE((token[2]))) {
       token += 3;
-      float x, y;
+      double x, y;
       parseFloat2(&x, &y, &token);
       vt.push_back(x);
       vt.push_back(y);
@@ -1314,9 +1314,9 @@ bool LoadObj(attrib_t *attrib, std::vector<shape_t> *shapes,
         token += strcspn(token, "/ \t\r") + 1;
       }
 
-      tag.floatValues.resize(static_cast<size_t>(ts.num_floats));
-      for (size_t i = 0; i < static_cast<size_t>(ts.num_floats); ++i) {
-        tag.floatValues[i] = parseFloat(&token);
+      tag.doubleValues.resize(static_cast<size_t>(ts.num_doubles));
+      for (size_t i = 0; i < static_cast<size_t>(ts.num_doubles); ++i) {
+        tag.doubleValues[i] = parseFloat(&token);
         token += strcspn(token, "/ \t\r") + 1;
       }
 
@@ -1410,7 +1410,7 @@ bool LoadObjWithCallback(std::istream &inStream, const callback_t &callback,
     // vertex
     if (token[0] == 'v' && IS_SPACE((token[1]))) {
       token += 2;
-      float x, y, z, w;  // w is optional. default = 1.0
+      double x, y, z, w;  // w is optional. default = 1.0
       parseV(&x, &y, &z, &w, &token);
       if (callback.vertex_cb) {
         callback.vertex_cb(user_data, x, y, z, w);
@@ -1421,7 +1421,7 @@ bool LoadObjWithCallback(std::istream &inStream, const callback_t &callback,
     // normal
     if (token[0] == 'v' && token[1] == 'n' && IS_SPACE((token[2]))) {
       token += 3;
-      float x, y, z;
+      double x, y, z;
       parseFloat3(&x, &y, &z, &token);
       if (callback.normal_cb) {
         callback.normal_cb(user_data, x, y, z);
@@ -1432,7 +1432,7 @@ bool LoadObjWithCallback(std::istream &inStream, const callback_t &callback,
     // texcoord
     if (token[0] == 'v' && token[1] == 't' && IS_SPACE((token[2]))) {
       token += 3;
-      float x, y, z;  // y and z are optional. default = 0.0
+      double x, y, z;  // y and z are optional. default = 0.0
       parseFloat3(&x, &y, &z, &token);
       if (callback.texcoord_cb) {
         callback.texcoord_cb(user_data, x, y, z);
@@ -1607,9 +1607,9 @@ bool LoadObjWithCallback(std::istream &inStream, const callback_t &callback,
         token += strcspn(token, "/ \t\r") + 1;
       }
 
-      tag.floatValues.resize(static_cast<size_t>(ts.num_floats));
-      for (size_t i = 0; i < static_cast<size_t>(ts.num_floats); ++i) {
-        tag.floatValues[i] = parseFloat(&token);
+      tag.doubleValues.resize(static_cast<size_t>(ts.num_doubles));
+      for (size_t i = 0; i < static_cast<size_t>(ts.num_doubles); ++i) {
+        tag.doubleValues[i] = parseFloat(&token);
         token += strcspn(token, "/ \t\r") + 1;
       }
 

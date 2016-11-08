@@ -1,6 +1,6 @@
 #include "bvh.h"
 
-void BVH_d::setUp(Vec3f* mvertices, Vec3f* mnormals, BoundingBox* mBBoxs, TriangleIndices* mt_indices, int mnumTriangles, Material* mmaterials, Vec3f mMin, Vec3f mMax, int* mmaterial_ids){
+void BVH_d::setUp(Vec3d* mvertices, Vec3d* mnormals, BoundingBox* mBBoxs, TriangleIndices* mt_indices, int mnumTriangles, Material* mmaterials, Vec3d mMin, Vec3d mMax, int* mmaterial_ids){
     numTriangles = mnumTriangles;
     normals = mnormals;
     vertices = mvertices;

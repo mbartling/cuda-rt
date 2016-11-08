@@ -11,21 +11,21 @@ Camera::Camera(){
     aspectRatio = 1;
     normalizedHeight = 1;
 
-    eye = Vec3f(0.f,0.f,0.f);
-    u = Vec3f(1.f,0.f,0.f);
-    v = Vec3f(0.f,1.f,0.f);
-    look = Vec3f(0.f,0.f,-1.f);
+    eye = Vec3d(0.f,0.f,0.f);
+    u = Vec3d(1.f,0.f,0.f);
+    v = Vec3d(0.f,1.f,0.f);
+    look = Vec3d(0.f,0.f,-1.f);
 }
 
 __host__ __device__
     void
-Camera::rayThrough(float x, float y, ray &r)
+Camera::rayThrough(double x, double y, ray &r)
     // Ray through normalized window point x,y.  In normalized coordinates
     // the camera's x and y vary both vary from 0 to 1.
 {
     x -= 0.5f;
     y -= 0.5f;
-    Vec3f dir = look + x*u + y*v;
+    Vec3d dir = look + x*u + y*v;
     normalize(dir);
     r.p = eye;
     r.d = dir;
@@ -33,14 +33,14 @@ Camera::rayThrough(float x, float y, ray &r)
 
 __host__ __device__
     void
-Camera::setEye(const Vec3f &eye)
+Camera::setEye(const Vec3d &eye)
 {
     this->eye = eye;
 }
 
 __host__ __device__
     void
-Camera::setLook(float r, float i, float j, float k)
+Camera::setLook(double r, double i, double j, double k)
     // Set the direction for the camera to look using a quaternion.  The
     // default camera looks down the neg z axis with the pos y axis as up.
     // We derive the new look direction by rotating the camera by the
@@ -64,20 +64,20 @@ Camera::setLook(float r, float i, float j, float k)
 
 __host__ __device__
     void
-Camera::setLook(const Vec3f &viewDir, const Vec3f &upDir)
+Camera::setLook(const Vec3d &viewDir, const Vec3d &upDir)
 {
-    Vec3f z = -viewDir;
-    const Vec3f &y = upDir;
-    Vec3f x = y ^ z;
+    Vec3d z = -viewDir;
+    const Vec3d &y = upDir;
+    Vec3d x = y ^ z;
 
-    //m = Mat3f(x.x, x.y, x.z, y.x, y.y, y.z, z.x, z.y, z.z).transpose();
-    m = Mat3f(x.x, y.x, z.x, x.y, y.y, z.y, x.z, y.z, z.z);
+    //m = Mat3d(x.x, x.y, x.z, y.x, y.y, y.z, z.x, z.y, z.z).transpose();
+    m = Mat3d(x.x, y.x, z.x, x.y, y.y, z.y, x.z, y.z, z.z);
     update();
 }
 
 __host__ __device__
     void
-Camera::setFOV( float fov )
+Camera::setFOV( double fov )
     // fov - field of view (height) in degrees
 {
     fov /= (180.f / PI); // convert to radians
@@ -87,7 +87,7 @@ Camera::setFOV( float fov )
 
 __host__ __device__
     void
-Camera::setAspectRatio(float ar)
+Camera::setAspectRatio(double ar)
     // ar - ratio of width to height
 {
     aspectRatio = ar;
@@ -98,7 +98,7 @@ __host__ __device__
     void
 Camera::update()
 {
-    u = m * Vec3f(1.f, 0.f, 0.f) * normalizedHeight*aspectRatio;
-    v = m * Vec3f(0.f, 1.f, 0.f) * normalizedHeight;
-    look = m * Vec3f(0.f, 0.f, -1.f);
+    u = m * Vec3d(1.f, 0.f, 0.f) * normalizedHeight*aspectRatio;
+    v = m * Vec3d(0.f, 1.f, 0.f) * normalizedHeight;
+    look = m * Vec3d(0.f, 0.f, -1.f);
 }
