@@ -78,10 +78,60 @@ class BoundingBox {
     // Using Kay/Kajiya algorithm.
     __host__ __device__
         bool intersect(const ray& r, double& tMin, double& tMax) const {
+            Vec3d tmp = r.d;
+            if (fabs(tmp.x) < RAY_EPSILON)
+                tmp.x = (tmp.x < 0) ? -0 : 0;
+            if (fabs(tmp.y) < RAY_EPSILON)
+                tmp.y = (tmp.y < 0) ? -0 : 0;
+            if (fabs(tmp.z) < RAY_EPSILON)
+                tmp.z = (tmp.z < 0) ? -0 : 0;
+
+            Vec3d invdir = recip(tmp);
+            double tymin;
+            double tymax;
+            double tzmin;
+            double tzmax;
+
+            if (invdir.x >= 0){
+                tMin = (bmin.x - r.p.x) * invdir.x;
+                tMax = (bmax.x - r.p.x) * invdir.x;
+            } else {
+                tMax = (bmin.x - r.p.x) * invdir.x;
+                tMin = (bmax.x - r.p.x) * invdir.x;
+            }
+            if (invdir.y >= 0){
+                tymin = (bmin.y - r.p.y) * invdir.y;
+                tymax = (bmax.y - r.p.y) * invdir.y;
+            } else {
+                tymax = (bmin.y - r.p.y) * invdir.y;
+                tymin = (bmax.y - r.p.y) * invdir.y;
+            }
+            if (tymin > tMin)
+                tMin = tymin;
+            if (tymax > tMax)
+                tMax = tymax;
+            
+            if (invdir.z >= 0){
+                tzmin = (bmin.z - r.p.z) * invdir.z;
+                tzmax = (bmax.z - r.p.z) * invdir.z;
+            } else {
+                tzmax = (bmin.z - r.p.z) * invdir.z;
+                tzmin = (bmax.z - r.p.z) * invdir.z;
+            }
+
+            if( (tMin > tzmax) || (tzmin > tMax))
+                return false;
+            if (tzmin > tMin)
+                tMin = tzmin;
+            if (tzmax < tMax)
+                tMax = tzmax;
+            return true;
+
+/*
             Vec3d R0 = r.getPosition();
             Vec3d Rd = r.getDirection();
-            tMin = -1.0e308; // 1.0e308 is close to infinity... close enough for us!
-            tMax = 1.0e308;
+            tMin = -1.0e307; // 1.0e308 is close to infinity... close enough for us!
+            tMax = 1.0e307;
             double ttemp;
 
             double vd = Rd.x;
@@ -139,6 +189,7 @@ class BoundingBox {
                 if (tMax < RAY_EPSILON) return false; // box is behind ray
             }
             return true; // it made it past all 3 axes.
+            */
         }
 
     __host__ __device__

@@ -7,6 +7,8 @@
 #include "material.h"
 #include "isect.h"
 #include "ray.h"
+
+#define DORECURSIVE 0
 class Scene_d;
 
 struct Node{
@@ -111,7 +113,7 @@ class BVH_d {
                 if(fabsf(t) < RAY_EPSILON) return false; // Jaysus this sucked
                 i.bary = Vec3d(1 - (alpha + beta), alpha, beta);
                 //printf("t=%f\n", t);
-                if( t < 0.0 ) return false;
+                //if( t < 0.0 ) return false;
                 i.t = t;
 
 
@@ -132,8 +134,44 @@ class BVH_d {
 
 
             }
+
+            __device__
+                bool intersect(const ray& r, isect& i, Node* node){
+                    bool haveOne = false;
+                    double tMin;
+                    double tMax;
+
+                    if(!node->BBox.intersect(r, tMin, tMax))
+                        return false;
+
+                    if(node->isLeaf){
+                        isect* cur = new isect();
+                        if(intersectTriangle(r, *cur, ((LeafNode*)node)->object_id)){
+                            //if(cur->t < i.t && cur->t > RAY_EPSILON){
+                            if(cur->t < i.t){
+                                i = *cur;
+                                haveOne = true;
+                            }
+
+                        } 
+                        
+                        delete cur;
+                        return haveOne;
+                        
+                    } //if leaf
+                    else{
+                        // Sanity
+                        return intersect(r, i, node->childA) || intersect(r, i, node->childB);
+                    }
+
+
+                }
             __device__
                 bool intersect(const ray& r, isect& i){
+#if DORECURSIVE
+                    i.t = 1.0e32;
+                    return intersect(r, i, getRoot());
+#else
                     bool haveOne = false;
                     isect* cur = new isect();
 
@@ -141,7 +179,8 @@ class BVH_d {
                     // and push NULL to indicate that there are no postponed nodes.
                     Node* stack[64];
                     Node** stackPtr = stack;
-                    *stackPtr++ = NULL; // push
+                    *stackPtr = NULL; // push
+                    stackPtr++;
 
                     // Traverse nodes starting from the root.
                     Node* node = getRoot();
@@ -185,12 +224,15 @@ class BVH_d {
                         bool traverseR = (overlapR && !childR->isLeaf);
 
                         if (!traverseL && !traverseR)
-                            node = *--stackPtr; // pop
+                            node = *(--stackPtr); // pop
                         else
                         {
                             node = (traverseL) ? childL : childR;
-                            if (traverseL && traverseR)
-                                *stackPtr++ = childR; // push
+                            if (traverseL && traverseR){
+                                *stackPtr = childR; // push
+                                stackPtr++;
+                            }
+                                
                         }
                     }
                     while (node != NULL);
@@ -198,6 +240,7 @@ class BVH_d {
                     delete cur;
                     //printf("Closest is %d, %f\n", i.object_id, i.t);
                     return haveOne;
+#endif
                 }
 
 

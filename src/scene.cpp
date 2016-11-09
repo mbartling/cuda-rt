@@ -9,7 +9,7 @@ void Scene_h::LoadObj(string filename, string mtl_basepath){
     string err;
 
     //Save some time by not retriangulating
-    bool ret = tinyobj::LoadObj(&mAttributes, &shapes, &material, &err, filename.c_str(), mtl_basepath.c_str(), false);
+    bool ret = tinyobj::LoadObj(&mAttributes, &shapes, &material, &err, filename.c_str(), mtl_basepath.c_str(), true);
 
     if (!err.empty()) { // `err` may contain warning message.
         std::cerr << err << std::endl;

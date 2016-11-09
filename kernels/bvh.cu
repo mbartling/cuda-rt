@@ -149,8 +149,8 @@ void computeBBoxesKernel( LeafNode* leafNodes, InternalNode* internalNodes, int 
             Parent->BBox.merge(Parent->childA->BBox);
             Parent->BBox.merge(Parent->childB->BBox);
 
-            int idA = (int)((Parent->childA->isLeaf) ? (LeafNode*)Parent - leafNodes: (InternalNode*)Parent - internalNodes ) ;
-            int idB = (int)((Parent->childB->isLeaf) ? (LeafNode*)Parent - leafNodes: (InternalNode*)Parent - internalNodes ) ;
+            int idA = (int)((Parent->childA->isLeaf) ? (LeafNode*)Parent->childA - leafNodes: (InternalNode*)Parent->childA - internalNodes ) ;
+            int idB = (int)((Parent->childB->isLeaf) ? (LeafNode*)Parent->childB - leafNodes: (InternalNode*)Parent->childB - internalNodes ) ;
             printf("**********parent child relationships**********\n"
                     "* parent idx (%d) bmin(%0.6f,%0.6f,%0.6f) bmax(%0.6f,%0.6f,%0.6f) \n"
                     "* childA(%d) is_leaf(%d) bmin(%0.6f,%0.6f,%0.6f) bmax(%0.6f,%0.6f,%0.6f) \n"
