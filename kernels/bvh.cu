@@ -139,6 +139,7 @@ void computeBBoxesKernel( LeafNode* leafNodes, InternalNode* internalNodes, int 
     if (idx >= numTriangles)
         return;
 
+    printf("* LEAF BB bmin(%0.6f,%0.6f,%0.6f) bmax(%0.6f,%0.6f,%0.6f) \n", leafNodes[idx].BBox.bmin.x, leafNodes[idx].BBox.bmin.y, leafNodes[idx].BBox.bmin.z, leafNodes[idx].BBox.bmax.x, leafNodes[idx].BBox.bmax.y, leafNodes[idx].BBox.bmax.z);
     Node* Parent = leafNodes[idx].parent;
     while(Parent)
     {
@@ -148,14 +149,15 @@ void computeBBoxesKernel( LeafNode* leafNodes, InternalNode* internalNodes, int 
             Parent->BBox.merge(Parent->childA->BBox);
             Parent->BBox.merge(Parent->childB->BBox);
 
-
-            printf_DEBUG("**********parent child relationships**********\n");
-            printf_DEBUG("* parent idx (%d) bmin(%0.6f,%0.6f,%0.6f) bmax(%0.6f,%0.6f,%0.6f) \n"
-                    "* childA is_leaf(%d) bmin(%0.6f,%0.6f,%0.6f) bmax(%0.6f,%0.6f,%0.6f) \n"
-                    "* childB is_leaf(%d) bmin(%0.6f,%0.6f,%0.6f) bmax(%0.6f,%0.6f,%0.6f) \n",
+            int idA = (int)((Parent->childA->isLeaf) ? (LeafNode*)Parent - leafNodes: (InternalNode*)Parent - internalNodes ) ;
+            int idB = (int)((Parent->childB->isLeaf) ? (LeafNode*)Parent - leafNodes: (InternalNode*)Parent - internalNodes ) ;
+            printf("**********parent child relationships**********\n"
+                    "* parent idx (%d) bmin(%0.6f,%0.6f,%0.6f) bmax(%0.6f,%0.6f,%0.6f) \n"
+                    "* childA(%d) is_leaf(%d) bmin(%0.6f,%0.6f,%0.6f) bmax(%0.6f,%0.6f,%0.6f) \n"
+                    "* childB(%d) is_leaf(%d) bmin(%0.6f,%0.6f,%0.6f) bmax(%0.6f,%0.6f,%0.6f) \n",
                     (InternalNode*) Parent - internalNodes, Parent->BBox.bmin.x , Parent->BBox.bmin.y,Parent->BBox.bmin.z, Parent->BBox.bmax.x , Parent->BBox.bmax.y, Parent->BBox.bmax.z,
-                    Parent->childA->isLeaf, Parent->childA->BBox.bmin.x, Parent->childA->BBox.bmin.y , Parent->childA->BBox.bmin.z, Parent->childA->BBox.bmax.x, Parent->childA->BBox.bmax.y, Parent->childA->BBox.bmax.z ,
-                    Parent->childB->isLeaf, Parent->childB->BBox.bmin.x, Parent->childB->BBox.bmin.y , Parent->childB->BBox.bmin.z, Parent->childB->BBox.bmax.x, Parent->childB->BBox.bmax.y, Parent->childB->BBox.bmax.z );
+                    idA, Parent->childA->isLeaf, Parent->childA->BBox.bmin.x, Parent->childA->BBox.bmin.y , Parent->childA->BBox.bmin.z, Parent->childA->BBox.bmax.x, Parent->childA->BBox.bmax.y, Parent->childA->BBox.bmax.z ,
+                    idB, Parent->childB->isLeaf, Parent->childB->BBox.bmin.x, Parent->childB->BBox.bmin.y , Parent->childB->BBox.bmin.z, Parent->childB->BBox.bmax.x, Parent->childB->BBox.bmax.y, Parent->childB->BBox.bmax.z );
 
 
             Parent = Parent->parent;

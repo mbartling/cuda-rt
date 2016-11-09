@@ -8,7 +8,8 @@ void Scene_h::LoadObj(string filename, string mtl_basepath){
     vector<material_t> material;
     string err;
 
-    bool ret = tinyobj::LoadObj(&mAttributes, &shapes, &material, &err, filename.c_str(), mtl_basepath.c_str());
+    //Save some time by not retriangulating
+    bool ret = tinyobj::LoadObj(&mAttributes, &shapes, &material, &err, filename.c_str(), mtl_basepath.c_str(), false);
 
     if (!err.empty()) { // `err` may contain warning message.
         std::cerr << err << std::endl;
