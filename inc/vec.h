@@ -141,6 +141,11 @@ double rnorm(const Vec3d& a){
 }
 
 __host__ __device__ __inline__
+Vec3d recip(const Vec3d& a){
+    return Vec3d(1.0/a.x, 1.0/a.y, 1.0/a.z);
+}
+
+__host__ __device__ __inline__
 bool isZero(const Vec3d& a){
     return (a.x == 0) && (a.y == 0) && (a.z == 0);
 }

@@ -91,19 +91,18 @@ void computeBoundingBoxes_kernel(int numTriangles, Vec3d* vertices, TriangleIndi
     if (idx >= numTriangles) return;
 
     TriangleIndices t_idx = t_indices[idx];
-    printf_DEBUG("idx(%d), a(%0.6f, %0.6f, %0.6f)\n" , idx, vertices[t_idx.a.vertex_index].x,
+    BBoxs[idx] = computeTriangleBoundingBox(vertices[t_idx.a.vertex_index],vertices[t_idx.b.vertex_index],vertices[t_idx.c.vertex_index]);
+    printf_DEBUG("idx(%d), a(%0.6f, %0.6f, %0.6f) b(%0.6f, %0.6f, %0.6f) c(%0.6f, %0.6f, %0.6f)\n" , idx, vertices[t_idx.a.vertex_index].x,
                                      vertices[t_idx.a.vertex_index].y,
-                                     vertices[t_idx.a.vertex_index].z);
-
-    printf_DEBUG("idx(%d), b(%0.6f, %0.6f, %0.6f)\n" , idx, vertices[t_idx.b.vertex_index].x,
+                                     vertices[t_idx.a.vertex_index].z,
+                                     vertices[t_idx.b.vertex_index].x,
                                      vertices[t_idx.b.vertex_index].y,
-                                     vertices[t_idx.b.vertex_index].z);
-
-    printf_DEBUG("idx(%d), c(%0.6f, %0.6f, %0.6f)\n" , idx, vertices[t_idx.c.vertex_index].x,
+                                     vertices[t_idx.b.vertex_index].z,
+                                     vertices[t_idx.c.vertex_index].x,
                                      vertices[t_idx.c.vertex_index].y,
                                      vertices[t_idx.c.vertex_index].z);
 
-    BBoxs[idx] = computeTriangleBoundingBox(vertices[t_idx.a.vertex_index],vertices[t_idx.b.vertex_index],vertices[t_idx.c.vertex_index]);
+    printf_DEBUG("* T idx(%d) BB bmin(%0.6f,%0.6f,%0.6f) bmax(%0.6f,%0.6f,%0.6f) \n",idx, BBoxs[idx].bmin.x, BBoxs[idx].bmin.y, BBoxs[idx].bmin.z, BBoxs[idx].bmax.x, BBoxs[idx].bmax.y, BBoxs[idx].bmax.z);
 
     return;
 }
