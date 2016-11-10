@@ -9,6 +9,8 @@
 #include "ray.h"
 
 #define DORECURSIVE 0
+#define DOSEQ 0
+#define WITH_CULLING 0
 class Scene_d;
 
 struct Node{
@@ -94,10 +96,16 @@ class BVH_d {
                 Vec3d AB = *b - *a;
                 Vec3d AC = *c - *a;
 
+                Vec3d normal = AB ^ AC;
                 // if (normal * -r.getDirection() < 0) return false;
                 Vec3d P = r.getDirection() ^ AC;
                 mDet = AB * P;
-                if(fabsf(mDet) < RAY_EPSILON ) return false;
+#if WITH_CULLING
+                if(mDet < RAY_EPSILON ) return false;   //With culling
+#else 
+                if(fabsf(mDet) < RAY_EPSILON ) return false; //Normal
+#endif
+                //if(mDet > -RAY_EPSILON && mDet < RAY_EPSILON ) return false; //Normal
 
                 mDetInv = 1.0f/mDet;
                 Vec3d T = r.getPosition() - *a;
@@ -123,6 +131,7 @@ class BVH_d {
                 i.N = (1.0 - (alpha + beta))*normals[ids->a.normal_index] + \
                       alpha*normals[ids->b.normal_index] + \
                       beta*normals[ids->c.normal_index];
+                //i.N = normal;
 
                 //i.N = normal;
 
@@ -134,6 +143,7 @@ class BVH_d {
 
 
             }
+
 
             __device__
                 bool intersect(const ray& r, isect& i, Node* node){
@@ -147,107 +157,133 @@ class BVH_d {
                     if(node->isLeaf){
                         isect* cur = new isect();
                         if(intersectTriangle(r, *cur, ((LeafNode*)node)->object_id)){
-                            //if(cur->t < i.t && cur->t > RAY_EPSILON){
+                           // if(cur->t < i.t && cur->t > RAY_EPSILON){
                             if(cur->t < i.t){
                                 i = *cur;
                                 haveOne = true;
                             }
 
                         } 
-                        
+
                         delete cur;
                         return haveOne;
-                        
-                    } //if leaf
-                    else{
-                        // Sanity
-                        return intersect(r, i, node->childA) || intersect(r, i, node->childB);
+
+                        } //if leaf
+                        else{
+                            // Sanity
+                            return intersect(r, i, node->childA) || intersect(r, i, node->childB);
+                        }
+
+
                     }
-
-
-                }
-            __device__
-                bool intersect(const ray& r, isect& i){
+                    __device__
+                        bool intersect(const ray& r, isect& i){
 #if DORECURSIVE
-                    i.t = 1.0e32;
-                    return intersect(r, i, getRoot());
+                            i.t = 1.0e32;
+                            return intersect(r, i, getRoot());
+#elif DOSEQ
+                            bool haveOne = false;
+                            isect* cur = new isect();
+                            double tmin, tmax;
+                            //printf("HERE\n");
+                            for(int j = 0; j < numTriangles; j++){
+                                if(!BBoxs[object_ids[j]].intersect(r, tmin, tmax))
+                                    continue;
+                                if(intersectTriangle(r, *cur, object_ids[j])){
+                                    if(!haveOne || (cur->t < i.t)){
+                                        //printf("FOUND ONE t=%f\n",cur->t);
+                                        i = *cur;
+                                        haveOne = true;
+                                    }
+                                }
+                            }
+                            if(!haveOne) i.t = 1000.0;
+                            delete cur;
+                            //printf("Closest is %d, %f\n", i.object_id, i.t);
+                            return haveOne;
+
 #else
-                    bool haveOne = false;
-                    isect* cur = new isect();
+                            bool haveOne = false;
+                            isect* cur = new isect();
 
-                    // Allocate traversal stack from thread-local memory,
-                    // and push NULL to indicate that there are no postponed nodes.
-                    Node* stack[64];
-                    Node** stackPtr = stack;
-                    *stackPtr = NULL; // push
-                    stackPtr++;
+                            // Allocate traversal stack from thread-local memory,
+                            // and push NULL to indicate that there are no postponed nodes.
+                            Node* stack[64];
+                            Node** stackPtr = stack;
+                            *stackPtr = NULL; // push
+                            stackPtr++;
 
-                    // Traverse nodes starting from the root.
-                    Node* node = getRoot();
-                    do
-                    {
-                        // Check each child node for overlap.
-                        Node* childL = node->childA;
-                        Node* childR = node->childB;
-                        double tMinA;
-                        double tMaxA;
-                        double tMinB;
-                        double tMaxB;
-                        bool overlapL = childL->BBox.intersect(r, tMinA, tMaxA);
-                        bool overlapR = childR->BBox.intersect(r, tMinB, tMaxB);
+                            // Traverse nodes starting from the root.
+                            Node* node = getRoot();
+                            do
+                            {
+                                // Check each child node for overlap.
+                                Node* childL = node->childA;
+                                Node* childR = node->childB;
+                                double tMinA;
+                                double tMaxA;
+                                double tMinB;
+                                double tMaxB;
+                                bool overlapL = childL->BBox.intersect(r, tMinA, tMaxA);
+                                bool overlapR = childR->BBox.intersect(r, tMinB, tMaxB);
 
-                        // Query overlaps a leaf node => check intersect
-                        if (overlapL && childL->isLeaf)
-                        {
-                            if(intersectTriangle(r, *cur, ((LeafNode*)childL)->object_id)){
-                                if(!haveOne || (cur->t < i.t)){
-                                    //printf("FOUND ONE t=%f\n",cur->t);
-                                    i = *cur;
-                                    haveOne = true;
+//                                printf("rp(%f, %f, %f), rd(%f,%f,%f) Node: %d\n", r.p.x,r.p.y,r.p.z,r.d.x,r.d.y,r.d.z, (InternalNode*)node - internalNodes);
+                                // Query overlaps a leaf node => check intersect
+                                if (overlapL && childL->isLeaf)
+                                {
+                                    if(intersectTriangle(r, *cur, ((LeafNode*)childL)->object_id)){
+
+                                        if((!haveOne || (cur->t < i.t))){
+                                        //if((!haveOne || (cur->t < i.t)) && cur->t > RAY_EPSILON){
+//                                            printf("LEFT FOUND ONE t=%f, N=(%f, %f, %f)f\n",cur->t, cur->N.x, cur->N.y, cur->N.z);
+                                            i = *cur;
+                                            haveOne = true;
+                                        }
+                                    }
+                                }
+
+//                                if (overlapR && childR->isLeaf)
+//                                {
+//                                    if(intersectTriangle(r, *cur, ((LeafNode*)childR)->object_id)){
+//                                        //if((!haveOne || (cur->t < i.t)) && cur->t > RAY_EPSILON){
+////                                            printf("RIGHT FOUND ONE t=%f, N=(%f, %f, %f)f\n",cur->t, cur->N.x, cur->N.y, cur->N.z);
+//                                        if(!haveOne || (cur->t < i.t)){
+//                                            //printf("FOUND ONE t=%f\n",cur->t);
+//                                            i = *cur;
+//                                            haveOne = true;
+//                                        }
+//                                    }
+//                                }
+//
+                                // Query overlaps an internal node => traverse.
+                                bool traverseL = (overlapL && !childL->isLeaf);
+                                bool traverseR = (overlapR && !childR->isLeaf);
+
+                                if (!traverseL && !traverseR)
+                                    node = *(--stackPtr); // pop
+                                else
+                                {
+                                    node = (traverseL) ? childL : childR;
+                                    if (traverseL && traverseR){
+                                        *stackPtr = childR; // push
+                                        stackPtr++;
+                                    }
+
                                 }
                             }
-                        }
-
-                        if (overlapR && childR->isLeaf)
-                        {
-                            if(intersectTriangle(r, *cur, ((LeafNode*)childR)->object_id)){
-                                if(!haveOne || (cur->t < i.t)){
-                                    //printf("FOUND ONE t=%f\n",cur->t);
-                                    i = *cur;
-                                    haveOne = true;
-                                }
-                            }
-                        }
-
-                        // Query overlaps an internal node => traverse.
-                        bool traverseL = (overlapL && !childL->isLeaf);
-                        bool traverseR = (overlapR && !childR->isLeaf);
-
-                        if (!traverseL && !traverseR)
-                            node = *(--stackPtr); // pop
-                        else
-                        {
-                            node = (traverseL) ? childL : childR;
-                            if (traverseL && traverseR){
-                                *stackPtr = childR; // push
-                                stackPtr++;
-                            }
-                                
-                        }
-                    }
-                    while (node != NULL);
-                    if(!haveOne) i.t = 1000.0;
-                    delete cur;
-                    //printf("Closest is %d, %f\n", i.object_id, i.t);
-                    return haveOne;
+                            while (node != NULL);
+                            if(!haveOne) i.t = 1000.0;
+                            delete cur;
+                            //printf("Closest is %d, %f\n", i.object_id, i.t);
+                            return haveOne;
 #endif
-                }
+                        }
 
 
 
 
-            };
+                };
 
-        class Scene_h;
-        void bvh(Scene_h& scene_h);
+            class Scene_h;
+            void bvh(Scene_h& scene_h);
 

@@ -25,7 +25,7 @@ void initLight(Scene_d* scene, Light_h hostLight, Light* light){
     scene->light = light;
 }
 void RayTracer::run(){
-    int blockSize = 16;
+    int blockSize = 8;
     dim3 blockDim(blockSize, blockSize); //A thread block is 16x16 pixels
     dim3 gridDim(deviceScene.imageWidth/blockDim.x, deviceScene.imageHeight/blockDim.y);
     
