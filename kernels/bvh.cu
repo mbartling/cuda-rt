@@ -78,8 +78,16 @@ void BVH_d::buildTree(){
     int blocksPerGrid =
         (numTriangles - 1 + threadsPerBlock - 1) / threadsPerBlock;
     setupLeafNodesKernel<<<blocksPerGrid, threadsPerBlock>>>(object_ids, leafNodes, numTriangles);
+    cudaDeviceSynchronize();
+    std::cout << "Post set up leaf nodes " << cudaGetErrorString(cudaGetLastError()) << std::endl;
+    
     generateHierarchyKernel<<<blocksPerGrid, threadsPerBlock>>>(mortonCodes, object_ids, internalNodes , leafNodes , numTriangles, BBoxs);
+    cudaDeviceSynchronize();
+    std::cout << "Post Generate Hierarchy " << cudaGetErrorString(cudaGetLastError()) << std::endl;
+    
     computeBBoxesKernel<<<blocksPerGrid, threadsPerBlock>>>(leafNodes, internalNodes, numTriangles);
+    cudaDeviceSynchronize();
+    std::cout << "Post compute Tree BBoxes " << cudaGetErrorString(cudaGetLastError()) << std::endl;
 
 }
 
@@ -130,6 +138,7 @@ void setupLeafNodesKernel(unsigned int* sorted_object_ids,
     leafNodes[idx].object_id = sorted_object_ids[idx];
     leafNodes[idx].childA = nullptr;
     leafNodes[idx].childB = nullptr;
+    leafNodes[idx].parent = nullptr;
 }
 
 __global__ 
@@ -139,9 +148,10 @@ void computeBBoxesKernel( LeafNode* leafNodes, InternalNode* internalNodes, int 
     if (idx >= numTriangles)
         return;
 
-    printf("* LEAF BB bmin(%0.6f,%0.6f,%0.6f) bmax(%0.6f,%0.6f,%0.6f) \n", leafNodes[idx].BBox.bmin.x, leafNodes[idx].BBox.bmin.y, leafNodes[idx].BBox.bmin.z, leafNodes[idx].BBox.bmax.x, leafNodes[idx].BBox.bmax.y, leafNodes[idx].BBox.bmax.z);
+
+    printf("* LEAF(%d) BB bmin(%0.6f,%0.6f,%0.6f) bmax(%0.6f,%0.6f,%0.6f) \n",idx, leafNodes[idx].BBox.bmin.x, leafNodes[idx].BBox.bmin.y, leafNodes[idx].BBox.bmin.z, leafNodes[idx].BBox.bmax.x, leafNodes[idx].BBox.bmax.y, leafNodes[idx].BBox.bmax.z);
     Node* Parent = leafNodes[idx].parent;
-    while(Parent)
+    while(Parent != nullptr)
     {
         if(atomicCAS(&(Parent->flag), 0 , 1))
         {
@@ -189,6 +199,7 @@ void generateHierarchyKernel(unsigned int* sortedMortonCodes,
         return;
 
     internalNodes[idx].isLeaf = false ;
+    internalNodes[idx].parent = nullptr ;
 
     int2 range = determineRange(sortedMortonCodes, numTriangles, idx);
     int first = range.x;
