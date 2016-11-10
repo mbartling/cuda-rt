@@ -2,7 +2,7 @@
 #include "common.h"
 #include "ray.h"
 #include "vec.h"
-#define USENEW 1
+#define USENEW 0
 
 class BoundingBox {
     public:
@@ -81,12 +81,12 @@ class BoundingBox {
         bool intersect(const ray& r, double& tMin, double& tMax) const {
 #if USENEW
             Vec3d tmp = r.d;
-            if (fabs(tmp.x) < RAY_EPSILON)
-                tmp.x = (tmp.x < 0) ? -0 : 0;
-            if (fabs(tmp.y) < RAY_EPSILON)
-                tmp.y = (tmp.y < 0) ? -0 : 0;
-            if (fabs(tmp.z) < RAY_EPSILON)
-                tmp.z = (tmp.z < 0) ? -0 : 0;
+//            if (fabs(tmp.x) < RAY_EPSILON)
+//                tmp.x = (tmp.x < 0) ? -0 : 0;
+//            if (fabs(tmp.y) < RAY_EPSILON)
+//                tmp.y = (tmp.y < 0) ? -0 : 0;
+//            if (fabs(tmp.z) < RAY_EPSILON)
+//                tmp.z = (tmp.z < 0) ? -0 : 0;
 
             Vec3d invdir = recip(tmp);
             double tymin;
@@ -108,8 +108,8 @@ class BoundingBox {
                 tymax = (bmin.y - r.p.y) * invdir.y;
                 tymin = (bmax.y - r.p.y) * invdir.y;
             }
-            if( (tMin > tymax) || (tymin > tMax))
-                return false;
+//            if( (tMin > tymax) || (tymin > tMax))
+//                return false;
             if (tymin > tMin)
                 tMin = tymin;
             if (tymax > tMax)
@@ -129,23 +129,25 @@ class BoundingBox {
                 tMin = tzmin;
             if (tzmax < tMax)
                 tMax = tzmax;
-            return ((tMin < 1000.0) && (tMax > RAY_EPSILON));
+            //return ((tMin < 1000.0) && (tMax > RAY_EPSILON));
+            return true;
 
 #else
-            Vec3d R0 = r.getPosition();
-            Vec3d Rd = r.getDirection();
+            //Vec3d R0 = r.getPosition();
+            //Vec3d Rd = r.getDirection();
             tMin = -1.0e307; // 1.0e308 is close to infinity... close enough for us!
             tMax = 1.0e307;
             double ttemp;
 
-            double vd = Rd.x;
+            double vd = r.d.x;
+            double v1, v2, t1, t2;
             // if the ray is parallel to the face's plane (=0.0)
             if( vd != 0.0 ){
-                double v1 = bmin.x - R0.x;
-                double v2 = bmax.x - R0.x;
+                v1 = bmin.x - r.p.x;
+                v2 = bmax.x - r.p.x;
                 // two slab intersections
-                double t1 = v1/vd;
-                double t2 = v2/vd;
+                t1 = v1/vd;
+                t2 = v2/vd;
                 if ( t1 > t2 ) { // swap t1 & t2
                     ttemp = t1;
                     t1 = t2;
@@ -156,14 +158,14 @@ class BoundingBox {
                 if (tMin > tMax) return false; // box is missed
                 if (tMax < RAY_EPSILON) return false; // box is behind ray
             }
-            vd = Rd.y;
+            vd = r.d.y;
             // if the ray is parallel to the face's plane (=0.0)
             if( vd != 0.0 ){
-                double v1 = bmin.y - R0.y;
-                double v2 = bmax.y - R0.y;
+                v1 = bmin.y - r.p.y;
+                v2 = bmax.y - r.p.y;
                 // two slab intersections
-                double t1 = v1/vd;
-                double t2 = v2/vd;
+                t1 = v1/vd;
+                t2 = v2/vd;
                 if ( t1 > t2 ) { // swap t1 & t2
                     ttemp = t1;
                     t1 = t2;
@@ -174,14 +176,14 @@ class BoundingBox {
                 if (tMin > tMax) return false; // box is missed
                 if (tMax < RAY_EPSILON) return false; // box is behind ray
             }
-            vd = Rd.z;
+            vd = r.d.z;
             // if the ray is parallel to the face's plane (=0.0)
             if( vd != 0.0 ){
-                double v1 = bmin.z - R0.z;
-                double v2 = bmax.z - R0.z;
+                v1 = bmin.z - r.p.z;
+                v2 = bmax.z - r.p.z;
                 // two slab intersections
-                double t1 = v1/vd;
-                double t2 = v2/vd;
+                t1 = v1/vd;
+                t2 = v2/vd;
                 if ( t1 > t2 ) { // swap t1 & t2
                     ttemp = t1;
                     t1 = t2;

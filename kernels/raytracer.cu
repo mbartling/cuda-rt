@@ -3,6 +3,7 @@
 #include "mrand.h"
 #include "indexing.h"
 #include <stdio.h>
+#include <iostream>
 
 #define PRINTVEC3(x) printf_DEBUG("(%f,%f,%f)",x.x,x.y,x.z)
 struct RayStack{
@@ -24,34 +25,71 @@ void initLight(Scene_d* scene, Light_h hostLight, Light* light){
     *light = Light(scene, hostLight);
     scene->light = light;
 }
+__global__
+void initScene(Scene_d* scene, Scene_d ht){
+        scene->numVertices = ht.numVertices;
+        scene->imageWidth = ht.imageWidth;
+        scene->imageHeight = ht.imageHeight;
+        scene->numTriangles = ht.numTriangles;
+        scene->numMaterials = ht.numMaterials;
+
+        scene->vertices = ht.vertices;
+        scene->normals = ht.normals;
+        scene->texcoords = ht.texcoords;
+
+        scene->materials = ht.materials;
+        scene->material_ids = ht.material_ids;
+
+        scene->BBoxs = ht.BBoxs; //Per Triangle Bounding Box
+
+        scene->t_indices = ht.t_indices;
+
+        scene->image = ht.image;
+        scene->bvh = ht.bvh;
+
+        scene->light = ht.light;
+        scene->camera = ht.camera;
+
+        scene->seeds = ht.seeds;
+}
 void RayTracer::run(){
-    int blockSize = 8;
+    int blockSize = 16;
     dim3 blockDim(blockSize, blockSize); //A thread block is 16x16 pixels
     dim3 gridDim(deviceScene.imageWidth/blockDim.x, deviceScene.imageHeight/blockDim.y);
-    
+
     Scene_d* scene;
     Light* light;
+    cudaDeviceSynchronize();
+    std::cout << "Start of Ray Trace run " << cudaGetErrorString(cudaGetLastError()) << std::endl;
     cudaMalloc(&scene, sizeof(Scene_d));
     cudaMalloc(&light, sizeof(Light));
     cudaMemcpy(scene, &deviceScene, sizeof(Scene_d), cudaMemcpyHostToDevice);
+//    initScene<<<1,1>>>(scene, deviceScene);
+    std::cout << "Before Light Kernel " << cudaGetErrorString(cudaGetLastError()) << std::endl;
 
     initLight<<<1,1>>>(scene, hostLight, light);
+    std::cout << "Post Init Light " << cudaGetErrorString(cudaGetLastError()) << std::endl;
     printf("\nLaunching Ray tracer kernel\n");
     cudaDeviceSynchronize();
     size_t stackSize;
-    cudaDeviceSetLimit(cudaLimitStackSize, 1 << 16);
+//    cudaDeviceSetLimit(cudaLimitStackSize, 1 << 16);
+    std::cout << "Post Set Stack Limit " << cudaGetErrorString(cudaGetLastError()) << std::endl;
     cudaDeviceGetLimit(&stackSize, cudaLimitStackSize);
     printf_DEBUG("Stack size is %d\n", stackSize);
+    std::cout << "Post Get Stack Limit " << cudaGetErrorString(cudaGetLastError()) << std::endl;
+    
     runRayTracerKernelRec<<<gridDim, blockDim>>>(scene, depth);
+    std::cout << "Post Ray Trace " << cudaGetErrorString(cudaGetLastError()) << std::endl;
     cudaDeviceSynchronize();
     printf("\nDone rendering Scene\n");
-    
+
     cudaFree(scene); //Conveniently does not call destructor
     cudaFree(light);
 }
 
 __global__
 void runRayTracerKernelRec(Scene_d* scene, int depth){
+    //printf("in kernel\n");
 
     int px = blockIdx.x * blockDim.x + threadIdx.x;
     int py = blockIdx.y * blockDim.y + threadIdx.y;
@@ -74,12 +112,12 @@ void runRayTracerKernelRec(Scene_d* scene, int depth){
     //y += randy; //in [0,1]
     //           ray r;
     //           scene->getCamera()->rayThrough(x, y, r);
-/*    double invWidth = 1.0 / double(scene->imageWidth), invHeight = 1.0 / double(scene->imageHeight);
-    double fov = 35, aspectratio = double(scene->imageWidth) / double(scene->imageHeight);
-    double angle = tan(M_PI * 0.5 * fov / 180.0f);
-    double xx = (2 * ((px + 0.5) * invWidth) - 1)*angle*aspectratio;
-    double yy = (1 - 2 * ((py + 0.5) * invHeight)) * angle;
-    double focalDistance = 0.0433/(2.0*angle);
+    /*    double invWidth = 1.0 / double(scene->imageWidth), invHeight = 1.0 / double(scene->imageHeight);
+          double fov = 35, aspectratio = double(scene->imageWidth) / double(scene->imageHeight);
+          double angle = tan(M_PI * 0.5 * fov / 180.0f);
+          double xx = (2 * ((px + 0.5) * invWidth) - 1)*angle*aspectratio;
+          double yy = (1 - 2 * ((py + 0.5) * invHeight)) * angle;
+          double focalDistance = 0.0433/(2.0*angle);
     //double focalDistance = 70.0/1000.0;
     double focalPoint = 7;
     //double lenseDistance = 1.0/(1.0/focalDistance - 1.0/focusPoint); //Doesnt matter
@@ -90,7 +128,7 @@ void runRayTracerKernelRec(Scene_d* scene, int depth){
     ray r(origin, Vec3d(xx, yy, 1.0));
     r.d = origin - normalize(r.d)*focalPoint;
     normalize(r.d);
-  */ 
+    */ 
     double invWidth = 1.0 / double(scene->imageWidth), invHeight = 1.0 / double(scene->imageHeight);
     double fov = 35, aspectratio = double(scene->imageWidth) / double(scene->imageHeight);
     double focalPoint = 7;
@@ -103,18 +141,20 @@ void runRayTracerKernelRec(Scene_d* scene, int depth){
     //double focalDistance = 70.0/1000.0;
     //double lenseDistance = 1.0/(1.0/focalDistance - 1.0/focusPoint); //Doesnt matter
     for(int iter = 0; iter < N; iter++){
-    double dofAngle = 2*M_PI*randDouble(scene->seeds);
-    double dofRadius = scene->getCamera()->getAperature() * sqrt(randDouble(scene->seeds)) / 2.0;
-    Vec3d origin(dofRadius*cos(dofAngle), dofRadius*sin(dofAngle), 0);
-    //ray r(Vec3d(0.0,0.0,0.0), Vec3d(xx, yy, -1));
-    ray r(origin, Vec3d(xx, yy, -1.0));
+        double dofAngle = 2*M_PI*randDouble(scene->seeds);
+        double dofRadius = scene->getCamera()->getAperature() * sqrt(randDouble(scene->seeds)) / 2.0;
+        Vec3d origin(dofRadius*cos(dofAngle), dofRadius*sin(dofAngle), 0);
+        ray r(origin, Vec3d(xx, yy, -1.0));
 
-    r.d = normalize(r.d)*focalPoint - origin;
-    normalize(r.d);
-    
-    printf_DEBUG("RAY %d, p=(%f,%f,%f), d=(%f,%f,%f)\n", idx, r.p.x, r.p.y, r.p.z, r.d.x, r.d.y, r.d.z);
-    //printf_DEBUG("Attempting to trace ray\n");
-    colorC += traceRay(scene, r, depth);
+        r.d = normalize(r.d)*focalPoint - origin;
+        //temp remove th drt with following 2 lines
+        r.p = Vec3d(0,0,0);
+        r.d = Vec3d(xx,yy,-1);
+        normalize(r.d);
+
+        printf_DEBUG("RAY %d, p=(%f,%f,%f), d=(%f,%f,%f)\n", idx, r.p.x, r.p.y, r.p.z, r.d.x, r.d.y, r.d.z);
+        //printf_DEBUG("Attempting to trace ray\n");
+        colorC += traceRay(scene, r, depth);
     }
     colorC /= double(N);
     scene->image[idx] = colorC;
@@ -128,6 +168,7 @@ Vec3d traceRay(Scene_d* scene, ray& r, int depth){
 
     // std::default_random_engine generator;
     // std::normal_distribution<double> distribution(0.0,0.01);
+ //   printf("traceRay\n");
     if(scene->intersect(r, *i)) {
         // YOUR CODE HERE
         Vec3d q = r.at(i->t);

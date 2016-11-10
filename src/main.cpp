@@ -123,6 +123,9 @@ const option::Descriptor usage[] = {
 
 int main(int argc, char* argv[])
 {
+    cudaDeviceSetLimit(cudaLimitMallocHeapSize, 64*1024*1024);
+    cudaDeviceSetLimit(cudaLimitStackSize, 1 << 16);
+
   string sceneName = "", outputFile = "", mtlFile = "", temp = "";
   vector<string> x;
   int height=512, width=512;

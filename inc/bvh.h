@@ -23,6 +23,8 @@ struct Node{
 
     __device__ 
         Node() : isLeaf(false) , flag(0), parent(nullptr) {}
+    __device__
+        bool isALeaf() const {return isLeaf;}
 };
 struct LeafNode : public Node {
     unsigned int object_id;
@@ -182,13 +184,15 @@ class BVH_d {
                             i.t = 1.0e32;
                             return intersect(r, i, getRoot());
 #elif DOSEQ
+                            //printf("HERE\n");
                             bool haveOne = false;
                             isect* cur = new isect();
                             double tmin, tmax;
                             //printf("HERE\n");
                             for(int j = 0; j < numTriangles; j++){
-                                if(!BBoxs[object_ids[j]].intersect(r, tmin, tmax))
-                                    continue;
+                                //if(!BBoxs[object_ids[j]].intersect(r, tmin, tmax))
+                                //    continue;
+                                if(BBoxs[object_ids[j]].intersect(r, tmin, tmax))
                                 if(intersectTriangle(r, *cur, object_ids[j])){
                                     if(!haveOne || (cur->t < i.t)){
                                         //printf("FOUND ONE t=%f\n",cur->t);
@@ -204,7 +208,14 @@ class BVH_d {
 
 #else
                             bool haveOne = false;
-                            isect* cur = new isect();
+                                double tMinA;
+                                double tMaxA;
+                                double tMinB;
+                                double tMaxB;
+                            Node* childL;
+                            Node* childR;
+                            bool overlapL;
+                            bool overlapR;
 
                             // Allocate traversal stack from thread-local memory,
                             // and push NULL to indicate that there are no postponed nodes.
@@ -215,22 +226,23 @@ class BVH_d {
 
                             // Traverse nodes starting from the root.
                             Node* node = getRoot();
+                            if(!node->BBox.intersect(r, tMinA, tMaxA))
+                                return false;
                             do
                             {
                                 // Check each child node for overlap.
-                                Node* childL = node->childA;
-                                Node* childR = node->childB;
-                                double tMinA;
-                                double tMaxA;
-                                double tMinB;
-                                double tMaxB;
-                                bool overlapL = childL->BBox.intersect(r, tMinA, tMaxA);
-                                bool overlapR = childR->BBox.intersect(r, tMinB, tMaxB);
+                                childL = node->childA;
+                                childR = node->childB;
+                                overlapL = childL->BBox.intersect(r, tMinA, tMaxA);
+                                overlapR = childR->BBox.intersect(r, tMinB, tMaxB);
+
+//                                printf("%d %d\n", overlapL, overlapR);
 
 //                                printf("rp(%f, %f, %f), rd(%f,%f,%f) Node: %d\n", r.p.x,r.p.y,r.p.z,r.d.x,r.d.y,r.d.z, (InternalNode*)node - internalNodes);
                                 // Query overlaps a leaf node => check intersect
-                                if (overlapL && childL->isLeaf)
+                                if (overlapL && childL->isALeaf())
                                 {
+                                    isect* cur = new isect();
                                     if(intersectTriangle(r, *cur, ((LeafNode*)childL)->object_id)){
 
                                         if((!haveOne || (cur->t < i.t))){
@@ -240,24 +252,28 @@ class BVH_d {
                                             haveOne = true;
                                         }
                                     }
+                                    delete cur;
                                 }
 
-//                                if (overlapR && childR->isLeaf)
-//                                {
-//                                    if(intersectTriangle(r, *cur, ((LeafNode*)childR)->object_id)){
-//                                        //if((!haveOne || (cur->t < i.t)) && cur->t > RAY_EPSILON){
-////                                            printf("RIGHT FOUND ONE t=%f, N=(%f, %f, %f)f\n",cur->t, cur->N.x, cur->N.y, cur->N.z);
-//                                        if(!haveOne || (cur->t < i.t)){
-//                                            //printf("FOUND ONE t=%f\n",cur->t);
-//                                            i = *cur;
-//                                            haveOne = true;
-//                                        }
-//                                    }
-//                                }
-//
+                                if (overlapR && childR->isALeaf())
+                                {
+                                    isect* cur = new isect();
+                                    if(intersectTriangle(r, *cur, ((LeafNode*)childR)->object_id)){
+                                        //if((!haveOne || (cur->t < i.t)) && cur->t > RAY_EPSILON){
+//                                            printf("RIGHT FOUND ONE t=%f, N=(%f, %f, %f)f\n",cur->t, cur->N.x, cur->N.y, cur->N.z);
+                                        //printf("FOUND RIGHT\n");
+                                        if(!haveOne || (cur->t < i.t)){
+                                            //printf("FOUND ONE t=%f\n",cur->t);
+                                            i = *cur;
+                                            haveOne = true;
+                                        }
+                                    }
+                                    delete cur;
+                                }
+
                                 // Query overlaps an internal node => traverse.
-                                bool traverseL = (overlapL && !childL->isLeaf);
-                                bool traverseR = (overlapR && !childR->isLeaf);
+                                bool traverseL = (overlapL && !childL->isALeaf());
+                                bool traverseR = (overlapR && !childR->isALeaf());
 
                                 if (!traverseL && !traverseR)
                                     node = *(--stackPtr); // pop
@@ -273,7 +289,6 @@ class BVH_d {
                             }
                             while (node != NULL);
                             if(!haveOne) i.t = 1000.0;
-                            delete cur;
                             //printf("Closest is %d, %f\n", i.object_id, i.t);
                             return haveOne;
 #endif

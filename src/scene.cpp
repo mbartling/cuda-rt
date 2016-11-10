@@ -97,13 +97,19 @@ Scene_d& Scene_d::operator = (const Scene_h& hostScene){
     cudaMemcpy(camera, hostScene.camera, sizeof(Camera), cudaMemcpyHostToDevice);
 
     computeBoundingBoxes();
+    cudaDeviceSynchronize();
+    std::cout << "Post Scene BBoxes " << cudaGetErrorString(cudaGetLastError()) << std::endl;
     
 
 
     Vec3d mMin;
     Vec3d mMax;
     findMinMax(mMin, mMax);
+    cudaDeviceSynchronize();
+    std::cout << "Post Find Min Max " << cudaGetErrorString(cudaGetLastError()) << std::endl;
     bvh.setUp(vertices,normals, BBoxs, t_indices, numTriangles, materials, mMin , mMax, material_ids);
+    cudaDeviceSynchronize();
+    std::cout << "Post BVH Setup " << cudaGetErrorString(cudaGetLastError()) << std::endl;
     printf("found min(%0.6f, %0.6f , %0.6f)" , mMin.x , mMin.y , mMin.z);
     printf("found max(%0.6f, %0.6f , %0.6f)" , mMax.x , mMax.y , mMax.z);
 

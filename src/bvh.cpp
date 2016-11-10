@@ -17,8 +17,14 @@ void BVH_d::setUp(Vec3d* mvertices, Vec3d* mnormals, BoundingBox* mBBoxs, Triang
 
     // Set up for the BVH Build
     computeMortonCodes(mMin, mMax);
+    cudaDeviceSynchronize();
+    std::cout << "Post Compute Morton Codes " << cudaGetErrorString(cudaGetLastError()) << std::endl;
     sortMortonCodes();
+    cudaDeviceSynchronize();
+    std::cout << "Post Sort Morton Codes " << cudaGetErrorString(cudaGetLastError()) << std::endl;
     buildTree();
+    cudaDeviceSynchronize();
+    std::cout << "Post Build Tree " << cudaGetErrorString(cudaGetLastError()) << std::endl;
 
     // Build the BVH
 
