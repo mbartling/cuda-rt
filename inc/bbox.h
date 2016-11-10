@@ -2,6 +2,7 @@
 #include "common.h"
 #include "ray.h"
 #include "vec.h"
+#define USENEW 1
 
 class BoundingBox {
     public:
@@ -78,6 +79,7 @@ class BoundingBox {
     // Using Kay/Kajiya algorithm.
     __host__ __device__
         bool intersect(const ray& r, double& tMin, double& tMax) const {
+#if USENEW
             Vec3d tmp = r.d;
             if (fabs(tmp.x) < RAY_EPSILON)
                 tmp.x = (tmp.x < 0) ? -0 : 0;
@@ -106,6 +108,8 @@ class BoundingBox {
                 tymax = (bmin.y - r.p.y) * invdir.y;
                 tymin = (bmax.y - r.p.y) * invdir.y;
             }
+            if( (tMin > tymax) || (tymin > tMax))
+                return false;
             if (tymin > tMin)
                 tMin = tymin;
             if (tymax > tMax)
@@ -125,9 +129,9 @@ class BoundingBox {
                 tMin = tzmin;
             if (tzmax < tMax)
                 tMax = tzmax;
-            return true;
+            return ((tMin < 1000.0) && (tMax > RAY_EPSILON));
 
-/*
+#else
             Vec3d R0 = r.getPosition();
             Vec3d Rd = r.getDirection();
             tMin = -1.0e307; // 1.0e308 is close to infinity... close enough for us!
@@ -189,7 +193,7 @@ class BoundingBox {
                 if (tMax < RAY_EPSILON) return false; // box is behind ray
             }
             return true; // it made it past all 3 axes.
-            */
+#endif
         }
 
     __host__ __device__
