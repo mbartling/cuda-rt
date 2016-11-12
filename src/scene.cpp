@@ -40,8 +40,9 @@ void Scene_h::LoadObj(string filename, string mtl_basepath){
 
         //For each Triangle Add the 
         size_t index_offset = 0;
-        std::cout << "Number of Vertices in face "<< shapes[s].mesh.num_face_vertices.size() << std::endl;
+        std::cout << "Number of faces in mesh "<< shapes[s].mesh.num_face_vertices.size() << std::endl;
         for(size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++){
+        //std::cout << "Number of Vertices in face "<< (int)shapes[s].mesh.num_face_vertices[f] << std::endl;
             TriangleIndices index;
             index.a = shapes[s].mesh.indices[index_offset + 0];
             index.b = shapes[s].mesh.indices[index_offset + 1];

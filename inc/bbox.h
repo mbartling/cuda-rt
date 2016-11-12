@@ -278,8 +278,8 @@ class BoundingBox {
 
     __host__ __device__
         void merge(const BoundingBox& bBox)	{
-            //if (bBox.bEmpty) return;
-            /*
+            if (bBox.bEmpty) return;
+            
             if (bEmpty || bBox.bmin.x < bmin.x) bmin.x = bBox.bmin.x;
             if (bEmpty || bBox.bmax.x > bmax.x) bmax.x = bBox.bmax.x;
 
@@ -288,7 +288,8 @@ class BoundingBox {
             
             if (bEmpty || bBox.bmin.z < bmin.z) bmin.z = bBox.bmin.z;
             if (bEmpty || bBox.bmax.z > bmax.z) bmax.z = bBox.bmax.z;
-            */
+            
+/*
             bmin.x = fmin(bmin.x, bBox.bmin.x);
             bmin.y = fmin(bmin.y, bBox.bmin.y);
             bmin.z = fmin(bmin.z, bBox.bmin.z);
@@ -296,8 +297,8 @@ class BoundingBox {
             bmax.x = fmax(bmax.x, bBox.bmax.x);
             bmax.y = fmax(bmax.y, bBox.bmax.y);
             bmax.z = fmax(bmax.z, bBox.bmax.z);
-            
-            //dirty = true;
+  */          
+            dirty = true;
             bEmpty = false;
         }
 };

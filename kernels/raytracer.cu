@@ -77,7 +77,7 @@ void RayTracer::run(){
     cudaDeviceGetLimit(&stackSize, cudaLimitStackSize);
     printf_DEBUG("Stack size is %d\n", stackSize);
     std::cout << "Post Get Stack Limit " << cudaGetErrorString(cudaGetLastError()) << std::endl;
-#if TEST
+#if DEBUG_BVH
     runRayTracerKernelRec<<<1, 1>>>(scene, depth);
 #else
     runRayTracerKernelRec<<<gridDim, blockDim>>>(scene, depth);
@@ -95,11 +95,13 @@ __global__
 void runRayTracerKernelRec(Scene_d* scene, int depth){
     //printf("in kernel\n");
 
+#if DEBUG_BVH
+    for(int px = scene->imageWidth/2; px < scene->imageWidth/2 + 1; px++){
+    for(int py = scene->imageHeight/2; py < scene->imageHeight/2 + 1; py++){
+#else
     int px = blockIdx.x * blockDim.x + threadIdx.x;
     int py = blockIdx.y * blockDim.y + threadIdx.y;
-#if TEST
-    for(px = scene->imageWidth/2; px < scene->imageWidth/2 + 1; px++){
-    for(py = scene->imageHeight/2; py < scene->imageHeight/2 + 1; py++){
+
 #endif
     int idx = (scene->imageHeight - py - 1)*scene->imageWidth + px;
 
@@ -129,7 +131,11 @@ void runRayTracerKernelRec(Scene_d* scene, int depth){
     double yy = (1 - 2 * ((py + 0.5) * invHeight)) * angle;
     double focalDistance = 0.0433/(2.0*angle);
     Vec3d colorC;
+#if DEBUG_BVH
+    int N = 1;
+#else
     int N = 5;
+#endif
     //double focalDistance = 70.0/1000.0;
     //double lenseDistance = 1.0/(1.0/focalDistance - 1.0/focusPoint); //Doesnt matter
     for(int iter = 0; iter < N; iter++){
@@ -140,17 +146,19 @@ void runRayTracerKernelRec(Scene_d* scene, int depth){
 
         r.d = normalize(r.d)*focalPoint - origin;
         //temp remove th drt with following 2 lines
-        //r.p = Vec3d(0,0,0);
-        //r.d = Vec3d(xx,yy,-1);
+#if DEBUG_BVH
+        r.p = Vec3d(0,0,0);
+        r.d = Vec3d(xx,yy,-1);
+#endif
         r.d = normalize(r.d);
 
-        printf_DEBUG("RAY %d %d, p=(%f,%f,%f), d=(%f,%f,%f)\n", px, py, r.p.x, r.p.y, r.p.z, r.d.x, r.d.y, r.d.z);
+        printf_DEBUG1("RAY %d %d, p=(%f,%f,%f), d=(%f,%f,%f)\n", px, py, r.p.x, r.p.y, r.p.z, r.d.x, r.d.y, r.d.z);
         //printf_DEBUG("Attempting to trace ray\n");
         colorC += traceRay(scene, r, depth);
     }
     colorC /= double(N);
     scene->image[idx] = colorC;
-#if TEST
+#if DEBUG_BVH
     }}
 #endif
 

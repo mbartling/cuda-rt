@@ -164,7 +164,8 @@ void computeBBoxesKernel( LeafNode* leafNodes, InternalNode* internalNodes, int 
 
             int idA = (int)((Parent->childA->isLeaf) ? (LeafNode*)Parent->childA - leafNodes: (InternalNode*)Parent->childA - internalNodes ) ;
             int idB = (int)((Parent->childB->isLeaf) ? (LeafNode*)Parent->childB - leafNodes: (InternalNode*)Parent->childB - internalNodes ) ;
-            printf_DEBUG("**********parent child relationships**********\n"
+            if(Parent == &internalNodes[0])
+            printf_DEBUG1("**********parent child relationships**********\n"
                     "* parent idx (%d) bmin(%0.6f,%0.6f,%0.6f) bmax(%0.6f,%0.6f,%0.6f) \n"
                     "* childA(%d) is_leaf(%d) ob=%d bmin(%0.6f,%0.6f,%0.6f) bmax(%0.6f,%0.6f,%0.6f) \n"
                     "* childB(%d) is_leaf(%d) ob=%d bmin(%0.6f,%0.6f,%0.6f) bmax(%0.6f,%0.6f,%0.6f) \n",
@@ -176,9 +177,7 @@ void computeBBoxesKernel( LeafNode* leafNodes, InternalNode* internalNodes, int 
             Parent = Parent->parent;
         }
         else{
-            return;
-
-
+            return; //If the first one then do nothing
         }
 
 
@@ -198,7 +197,7 @@ void generateHierarchyKernel(unsigned int* sortedMortonCodes,
 
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
-    if (idx > numTriangles - 2 ) //there are n - 1 internal nodes
+    if (idx >= numTriangles - 1 ) //there are n - 1 internal nodes
         return;
 
     internalNodes[idx].isLeaf = false ;
@@ -274,7 +273,7 @@ int findSplit( unsigned int* sortedMortonCodes,
 
     do
     {
-        step = (step + 1) >> 1; // exponential decrease
+        step = (step + 1) >> 1; // exponential decrease //Ceiling
         int newSplit = split + step; // proposed new position
 
         if (newSplit < last)
@@ -334,9 +333,11 @@ int2 determineRange(unsigned int* sortedMortonCodes, int numTriangles, int idx)
     //find the other end using binary search
     unsigned int l = 0;
 
-    do
+    //do
+    while (lmax >= 1)
     {
-        lmax = (lmax + 1) >> 1; // exponential decrease
+        //lmax = (lmax + 1) >> 1; // exponential decrease
+        lmax = lmax >> 1; // exponential decrease // No Ceiling
         int new_val = idx + (l + lmax)*direction ; 
 
         if(new_val >= 0 && new_val < numTriangles )
@@ -347,7 +348,7 @@ int2 determineRange(unsigned int* sortedMortonCodes, int numTriangles, int idx)
                 l = l + lmax;
         }
     }
-    while (lmax > 1);
+    //while (lmax > 1);
 
     int j = idx + l*direction;
 
@@ -469,18 +470,18 @@ bool BVH_d::intersectTriangle(const ray& r, isect&  i, int object_id) const
 
 __device__
 void printBBox(const BoundingBox& b){
-    printf_DEBUG("[bmin(%f,%f,%f) bmax(%f,%f,%f)]", b.bmin.x, b.bmin.y, b.bmin.z,b.bmax.x, b.bmax.y, b.bmax.z);
+    printf_DEBUG1("[bmin(%f,%f,%f) bmax(%f,%f,%f)]", b.bmin.x, b.bmin.y, b.bmin.z,b.bmax.x, b.bmax.y, b.bmax.z);
 }
 __device__
 void printNode(const Node* node, int stackDepth){
-    printf("   ");
+    printf_DEBUG1("   ");
     for(int i = 0; i < stackDepth; i++)
-        printf(" ");
+        printf_DEBUG1(" ");
     if(node->isALeaf())
-        printf("LN: ");
+        printf_DEBUG1("LN: ");
     else
-        printf("IN: ");
-    //printf("%d id=%d ob=%d ", stackDepth, node->node_id, node->object_id);
+        printf_DEBUG1("IN: ");
+    printf_DEBUG1("%d ob=%d ", stackDepth, node->object_id);
     printBBox(node->BBox);
     //printf("\n");
 }
@@ -501,19 +502,19 @@ bool BVH_d::intersect(const ray& r, isect& i) const{
         //    continue;
         //if(BBoxs[object_ids[j]].intersect(r, tmin, tmax)){
         //if(BBoxs[object_ids[j]].intersect(r)){
-            printf_DEBUG("%d ", object_ids[j]);
+            printf_DEBUG1("%d ", object_ids[j]);
             printBBox(BBoxs[object_ids[j]]);
-            printf_DEBUG(" BX");
+            printf_DEBUG1(" BX");
             if(intersectTriangle(r, *cur, object_ids[j])){
-                printf_DEBUG(" TX");
+                printf_DEBUG1(" TX");
                 if(!haveOne || (cur->t < i.t)){
-                    printf_DEBUG(" t=%f", cur->t);
+                    printf_DEBUG1(" t=%f", cur->t);
                     //printf("FOUND ONE t=%f\n",cur->t);
                     i = *cur;
                     haveOne = true;
                 }
             }
-            printf_DEBUG("\n");
+            printf_DEBUG1("\n");
         //}else{
         //    printf_DEBUG("[MISS] %d\n", object_ids[j]);
 
@@ -529,17 +530,17 @@ bool BVH_d::intersect(const ray& r, isect& i) const{
     stack[--topIndex] = getRoot();
     bool haveOne = false;
     isect cur;// = new isect();
-    printf_DEBUG("HERE\n");
+    printf_DEBUG1("HERE\n");
     while (topIndex != 64){
         Node* node = stack[topIndex++];
-        //printNode(node, 64-topIndex);
+        printNode(node, 64-topIndex);
         if(node->BBox.intersect(r)) {
-            printf_DEBUG(" BX");
+            printf_DEBUG1(" BX");
             if(node->isALeaf()){
                 if(intersectTriangle(r, cur, ((LeafNode*)node)->object_id)){
-                    printf_DEBUG(" TX");
+                    printf_DEBUG1(" TX");
                     if((!haveOne || (cur.t < i.t))){
-                        printf_DEBUG(" t=%f", cur.t);
+                        printf_DEBUG1(" t=%f", cur.t);
                         //if((!haveOne || (cur->t < i.t)) && cur->t > RAY_EPSILON){
                         i = cur;
                         haveOne = true;
@@ -556,7 +557,7 @@ bool BVH_d::intersect(const ray& r, isect& i) const{
             }
         }
 
-    printf_DEBUG("\n");
+    printf_DEBUG1("\n");
 //    __syncthreads();
     }
     //delete cur;

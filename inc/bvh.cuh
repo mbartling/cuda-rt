@@ -22,6 +22,7 @@ struct Node{
     int flag;
     bool isLeaf;
     BoundingBox BBox;
+    unsigned int object_id;
     //unsigned int node_id; //debugging
 
     __device__ 
@@ -30,7 +31,6 @@ struct Node{
         bool isALeaf() const {return isLeaf;}
 };
 struct LeafNode : public Node {
-    unsigned int object_id;
 
     __device__
         LeafNode() {
