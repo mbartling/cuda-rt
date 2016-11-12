@@ -124,7 +124,7 @@ const option::Descriptor usage[] = {
 int main(int argc, char* argv[])
 {
     cudaDeviceReset();
-    cudaDeviceSetLimit(cudaLimitMallocHeapSize, 64*1024*1024);
+    //cudaDeviceSetLimit(cudaLimitMallocHeapSize, 64*1024*1024);
     cudaDeviceSetLimit(cudaLimitStackSize, 1 << 16);
 
   string sceneName = "", outputFile = "", mtlFile = "", temp = "";

@@ -40,6 +40,7 @@ void Scene_h::LoadObj(string filename, string mtl_basepath){
 
         //For each Triangle Add the 
         size_t index_offset = 0;
+        std::cout << "Number of Vertices in face "<< shapes[s].mesh.num_face_vertices.size() << std::endl;
         for(size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++){
             TriangleIndices index;
             index.a = shapes[s].mesh.indices[index_offset + 0];
@@ -79,7 +80,8 @@ Scene_h& Scene_h::operator = (const Scene_d& deviceScene){
     } while (0)
 Scene_d& Scene_d::operator = (const Scene_h& hostScene){
     printf("Copying to Device\n");
-    numVertices = hostScene.mAttributes.vertices.size();
+    numVertices = hostScene.mAttributes.vertices.size()/3;
+    int numNormals = hostScene.mAttributes.normals.size()/3;
     printf("num of vertices : %d \n" , numVertices);
     numTriangles = hostScene.t_indices.size();
     printf("num of triangles : %d \n" , numTriangles);
@@ -92,7 +94,7 @@ Scene_d& Scene_d::operator = (const Scene_h& hostScene){
     //Allocate Space for everything
     cudaMalloc(&vertices, numVertices*sizeof(Vec3d));
     cudaCheckErrors("cudaMalloc vertices fail");
-    cudaMalloc(&normals, numVertices*sizeof(Vec3d));
+    cudaMalloc(&normals, numNormals*sizeof(Vec3d));
     cudaCheckErrors("cudaMalloc normals fail");
 
     cudaMalloc(&BBoxs, numTriangles*sizeof(BoundingBox));
@@ -125,7 +127,8 @@ Scene_d& Scene_d::operator = (const Scene_h& hostScene){
     //    hverts[i] = hostScene.mAttributes.normals[i];
     //cudaMemcpy(normals, hverts, numVertices*sizeof(Vec3d), cudaMemcpyHostToDevice);
     cudaCheckErrors("cudaMemcpy normals fail");
-    cudaMemcpy(normals, hostScene.mAttributes.normals.data(), numVertices*sizeof(Vec3d), cudaMemcpyHostToDevice);
+    std::cout << hostScene.mAttributes.normals.size() << endl;
+    cudaMemcpy(normals, hostScene.mAttributes.normals.data(), numNormals*sizeof(Vec3d), cudaMemcpyHostToDevice);
 
     //free(hverts);
     cudaMemcpy(t_indices, hostScene.t_indices.data(), numTriangles*sizeof(TriangleIndices), cudaMemcpyHostToDevice);

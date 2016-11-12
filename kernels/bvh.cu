@@ -544,22 +544,23 @@ bool BVH_d::intersect(const ray& r, isect& i) const{
                         i = cur;
                         haveOne = true;
                     }
-                    }
+                }
 
-                } else{
+            } else{
                     stack[--topIndex] = node->childB;
                     stack[--topIndex] = node->childA;
                     if(topIndex < 0){
                         printf("Intersect stack not big enough!\n");
                         return false;
-                }
+                    }
             }
+        }
 
     printf_DEBUG("\n");
 //    __syncthreads();
-        }
-        //delete cur;
-        return haveOne;
+    }
+    //delete cur;
+    return haveOne;
 #else
         bool haveOne = false;
         double tMinA;

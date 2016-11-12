@@ -10,8 +10,8 @@
 #include <cuda.h>
 
 #define DORECURSIVE 0
-#define DOSEQ 1
-#define ATTEMPT 0
+#define DOSEQ 0
+#define ATTEMPT 1
 #define WITH_CULLING 0
 class Scene_d;
 
