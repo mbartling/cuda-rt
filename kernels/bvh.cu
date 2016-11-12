@@ -500,7 +500,7 @@ bool BVH_d::intersect(const ray& r, isect& i) const{
         //if(!BBoxs[object_ids[j]].intersect(r, tmin, tmax))
         //    continue;
         //if(BBoxs[object_ids[j]].intersect(r, tmin, tmax)){
-        if(BBoxs[object_ids[j]].intersect(r)){
+        //if(BBoxs[object_ids[j]].intersect(r)){
             printf_DEBUG("%d ", object_ids[j]);
             printBBox(BBoxs[object_ids[j]]);
             printf_DEBUG(" BX");
@@ -514,10 +514,10 @@ bool BVH_d::intersect(const ray& r, isect& i) const{
                 }
             }
             printf_DEBUG("\n");
-        }else{
-            printf_DEBUG("[MISS] %d\n", object_ids[j]);
+        //}else{
+        //    printf_DEBUG("[MISS] %d\n", object_ids[j]);
 
-        }
+        // }
     }
     if(!haveOne) i.t = 1000.0;
     delete cur;
@@ -556,7 +556,7 @@ bool BVH_d::intersect(const ray& r, isect& i) const{
             }
 
     printf_DEBUG("\n");
-    __syncthreads();
+//    __syncthreads();
         }
         //delete cur;
         return haveOne;

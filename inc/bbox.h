@@ -2,7 +2,7 @@
 #include "common.h"
 #include "ray.h"
 #include "vec.h"
-#define USENEW 0
+#define USENEW 1
 #define USEHACK 1
 
 class BoundingBox {
