@@ -1,4 +1,4 @@
-#include "bvh.h"
+#include "bvh.cuh"
 
 void BVH_d::setUp(Vec3d* mvertices, Vec3d* mnormals, BoundingBox* mBBoxs, TriangleIndices* mt_indices, int mnumTriangles, Material* mmaterials, Vec3d mMin, Vec3d mMax, int* mmaterial_ids){
     numTriangles = mnumTriangles;
@@ -30,6 +30,7 @@ void BVH_d::setUp(Vec3d* mvertices, Vec3d* mnormals, BoundingBox* mBBoxs, Triang
 
 }
 
+//__host__ __device__ 
 BVH_d::~BVH_d(){
     cudaFree(mortonCodes);
     cudaFree(object_ids);

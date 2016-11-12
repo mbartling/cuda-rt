@@ -1,2 +1,2 @@
 #pragma once
-const double RAY_EPSILON = 0.00000001;
+#define RAY_EPSILON 0.00000001

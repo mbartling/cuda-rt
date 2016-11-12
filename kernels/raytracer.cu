@@ -4,7 +4,7 @@
 #include "indexing.h"
 #include <stdio.h>
 #include <iostream>
-
+#define TEST 0 
 #define PRINTVEC3(x) printf_DEBUG("(%f,%f,%f)",x.x,x.y,x.z)
 struct RayStack{
     ray r;
@@ -77,8 +77,12 @@ void RayTracer::run(){
     cudaDeviceGetLimit(&stackSize, cudaLimitStackSize);
     printf_DEBUG("Stack size is %d\n", stackSize);
     std::cout << "Post Get Stack Limit " << cudaGetErrorString(cudaGetLastError()) << std::endl;
-    
+#if TEST
+    runRayTracerKernelRec<<<1, 1>>>(scene, depth);
+#else
     runRayTracerKernelRec<<<gridDim, blockDim>>>(scene, depth);
+#endif
+
     std::cout << "Post Ray Trace " << cudaGetErrorString(cudaGetLastError()) << std::endl;
     cudaDeviceSynchronize();
     printf("\nDone rendering Scene\n");
@@ -93,6 +97,10 @@ void runRayTracerKernelRec(Scene_d* scene, int depth){
 
     int px = blockIdx.x * blockDim.x + threadIdx.x;
     int py = blockIdx.y * blockDim.y + threadIdx.y;
+#if TEST
+    for(px = scene->imageWidth/2; px < scene->imageWidth/2 + 1; px++){
+    for(py = scene->imageHeight/2; py < scene->imageHeight/2 + 1; py++){
+#endif
     int idx = (scene->imageHeight - py - 1)*scene->imageWidth + px;
 
     if (px >= scene->imageWidth)
@@ -101,6 +109,7 @@ void runRayTracerKernelRec(Scene_d* scene, int depth){
         return;
     if (idx < 0 || idx >= scene->imageHeight * scene->imageWidth)
         return;
+
     //           double x = double(px)/double(scene->imageWidth);
     //           double y = double(py)/double(scene->imageHeight);
 
@@ -112,23 +121,6 @@ void runRayTracerKernelRec(Scene_d* scene, int depth){
     //y += randy; //in [0,1]
     //           ray r;
     //           scene->getCamera()->rayThrough(x, y, r);
-    /*    double invWidth = 1.0 / double(scene->imageWidth), invHeight = 1.0 / double(scene->imageHeight);
-          double fov = 35, aspectratio = double(scene->imageWidth) / double(scene->imageHeight);
-          double angle = tan(M_PI * 0.5 * fov / 180.0f);
-          double xx = (2 * ((px + 0.5) * invWidth) - 1)*angle*aspectratio;
-          double yy = (1 - 2 * ((py + 0.5) * invHeight)) * angle;
-          double focalDistance = 0.0433/(2.0*angle);
-    //double focalDistance = 70.0/1000.0;
-    double focalPoint = 7;
-    //double lenseDistance = 1.0/(1.0/focalDistance - 1.0/focusPoint); //Doesnt matter
-    double dofAngle = 2*M_PI*randDouble(scene->seeds);
-    double dofRadius = scene->getCamera()->getAperature()*focalDistance * sqrt(randDouble(scene->seeds)) / 2.0;
-    Vec3d origin(dofRadius*cos(dofAngle), dofRadius*sin(dofAngle), 0);
-    //ray r(Vec3d(0.0,0.0,0.0), Vec3d(xx, yy, -1));
-    ray r(origin, Vec3d(xx, yy, 1.0));
-    r.d = origin - normalize(r.d)*focalPoint;
-    normalize(r.d);
-    */ 
     double invWidth = 1.0 / double(scene->imageWidth), invHeight = 1.0 / double(scene->imageHeight);
     double fov = 35, aspectratio = double(scene->imageWidth) / double(scene->imageHeight);
     double focalPoint = 7;
@@ -148,16 +140,19 @@ void runRayTracerKernelRec(Scene_d* scene, int depth){
 
         r.d = normalize(r.d)*focalPoint - origin;
         //temp remove th drt with following 2 lines
-        r.p = Vec3d(0,0,0);
-        r.d = Vec3d(xx,yy,-1);
-        normalize(r.d);
+        //r.p = Vec3d(0,0,0);
+        //r.d = Vec3d(xx,yy,-1);
+        r.d = normalize(r.d);
 
-        printf_DEBUG("RAY %d, p=(%f,%f,%f), d=(%f,%f,%f)\n", idx, r.p.x, r.p.y, r.p.z, r.d.x, r.d.y, r.d.z);
+        printf_DEBUG("RAY %d %d, p=(%f,%f,%f), d=(%f,%f,%f)\n", px, py, r.p.x, r.p.y, r.p.z, r.d.x, r.d.y, r.d.z);
         //printf_DEBUG("Attempting to trace ray\n");
         colorC += traceRay(scene, r, depth);
     }
     colorC /= double(N);
     scene->image[idx] = colorC;
+#if TEST
+    }}
+#endif
 
 }
 

@@ -18,7 +18,7 @@
 #include <iostream>
 #include <vector>
 #include "optionparser.h"
-#include "bvh.h"
+//#include "bvh.h"
 #include "scene.h"
 #include "raytracer.h"
 #include "tiny_obj_loader.h"
@@ -257,7 +257,9 @@ int main(int argc, char* argv[])
   //scene.LoadObj(sceneName);
   //bvh(scene);
 
+  cout << "Building Ray Tracer" << endl;
   RayTracer rayTracer(height, width, 1);
+  cout << "Loading Obj" << endl;
   rayTracer.LoadObj(sceneName, mtlFile);
   Light_h hLight;
   hLight.color = color;
@@ -267,9 +269,13 @@ int main(int argc, char* argv[])
 
   rayTracer.setHostLight(hLight);
   rayTracer.setCamera(&camera); 
+  cout << "Setting up Scene" << endl;
   rayTracer.setUpDevice();
+  cout << "Running" << endl;
   rayTracer.run();
+  cout << "Fetching Image" << endl;
   rayTracer.pullRaytracedImage();
+  cout << "Writing Image" << endl;
   rayTracer.writeImage(outputFile);
  
 }

@@ -44,6 +44,9 @@ class Vec3d{
         __host__ __device__
         Vec3d& operator += (const Vec3d& a){ x += a.x; y += a.y; z += a.z; return *this; }
 
+        __host__ __device__
+        double operator [] (int i) const { if(i == 0){ return x; } if(i == 1){ return y; }if(i == 2){ return z; } else{return 1.0e307; }}
+
 
 };
 

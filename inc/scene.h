@@ -5,7 +5,7 @@
 #include <string>
 #include "tris.h"
 #include "bbox.h"
-#include "bvh.h"
+#include "bvh.cuh"
 #include <stdlib.h>
 #include "material.h"
 #include "isect.h"

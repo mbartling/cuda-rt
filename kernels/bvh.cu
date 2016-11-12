@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "bvh.h"
+#include "bvh.cuh"
 #include <thrust/sort.h>
 #include <thrust/device_ptr.h>
 #include "scene.h"
@@ -37,7 +37,7 @@ __global__
 void computeMortonCodesKernel(unsigned int* mortonCodes, unsigned int* object_ids, 
         BoundingBox* BBoxs, int numTriangles, Vec3d mMin, Vec3d mMax);
 __global__ 
-void setupLeafNodesKernel(unsigned int* sorted_object_ids, 
+void setupLeafNodesKernel(unsigned int* sorted_object_ids, BoundingBox* BBoxs,
         LeafNode* leafNodes, int numTriangles);
 
 __global__ 
@@ -70,21 +70,21 @@ void BVH_d::setupLeafNodes(){
     int threadsPerBlock = 256;
     int blocksPerGrid =
         (numTriangles + threadsPerBlock - 1) / threadsPerBlock;
-    setupLeafNodesKernel<<<blocksPerGrid, threadsPerBlock>>>(object_ids, leafNodes, numTriangles);
+    setupLeafNodesKernel<<<blocksPerGrid, threadsPerBlock>>>(object_ids, BBoxs, leafNodes, numTriangles);
 
 }
 void BVH_d::buildTree(){
     int threadsPerBlock = 256;
     int blocksPerGrid =
         (numTriangles - 1 + threadsPerBlock - 1) / threadsPerBlock;
-    setupLeafNodesKernel<<<blocksPerGrid, threadsPerBlock>>>(object_ids, leafNodes, numTriangles);
+    setupLeafNodesKernel<<<blocksPerGrid, threadsPerBlock>>>(object_ids, BBoxs, leafNodes, numTriangles);
     cudaDeviceSynchronize();
     std::cout << "Post set up leaf nodes " << cudaGetErrorString(cudaGetLastError()) << std::endl;
-    
+
     generateHierarchyKernel<<<blocksPerGrid, threadsPerBlock>>>(mortonCodes, object_ids, internalNodes , leafNodes , numTriangles, BBoxs);
     cudaDeviceSynchronize();
     std::cout << "Post Generate Hierarchy " << cudaGetErrorString(cudaGetLastError()) << std::endl;
-    
+
     computeBBoxesKernel<<<blocksPerGrid, threadsPerBlock>>>(leafNodes, internalNodes, numTriangles);
     cudaDeviceSynchronize();
     std::cout << "Post compute Tree BBoxes " << cudaGetErrorString(cudaGetLastError()) << std::endl;
@@ -95,7 +95,7 @@ void bvh(Scene_h& scene_h)
 {
     Scene_d scene_d;
     scene_d = scene_h;
-    
+
     //launch the kernel
     //hello<<<NUM_BLOCKS, BLOCK_WIDTH>>>();
 
@@ -129,6 +129,7 @@ void computeMortonCodesKernel(unsigned int* mortonCodes, unsigned int* object_id
 
 __global__ 
 void setupLeafNodesKernel(unsigned int* sorted_object_ids, 
+        BoundingBox* BBoxs,
         LeafNode* leafNodes, int numTriangles){
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -139,9 +140,11 @@ void setupLeafNodesKernel(unsigned int* sorted_object_ids,
     leafNodes[idx].childA = nullptr;
     leafNodes[idx].childB = nullptr;
     leafNodes[idx].parent = nullptr;
+    //leafNodes[idx].node_id= idx;
+    leafNodes[idx].BBox= BBoxs[sorted_object_ids[idx]];
 }
 
-__global__ 
+    __global__ 
 void computeBBoxesKernel( LeafNode* leafNodes, InternalNode* internalNodes, int numTriangles)
 {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -149,25 +152,25 @@ void computeBBoxesKernel( LeafNode* leafNodes, InternalNode* internalNodes, int 
         return;
 
 
-    printf("* LEAF(%d) BB bmin(%0.6f,%0.6f,%0.6f) bmax(%0.6f,%0.6f,%0.6f) \n",idx, leafNodes[idx].BBox.bmin.x, leafNodes[idx].BBox.bmin.y, leafNodes[idx].BBox.bmin.z, leafNodes[idx].BBox.bmax.x, leafNodes[idx].BBox.bmax.y, leafNodes[idx].BBox.bmax.z);
+    printf_DEBUG("* LEAF(%d) BB bmin(%0.6f,%0.6f,%0.6f) bmax(%0.6f,%0.6f,%0.6f) \n",idx, leafNodes[idx].BBox.bmin.x, leafNodes[idx].BBox.bmin.y, leafNodes[idx].BBox.bmin.z, leafNodes[idx].BBox.bmax.x, leafNodes[idx].BBox.bmax.y, leafNodes[idx].BBox.bmax.z);
     Node* Parent = leafNodes[idx].parent;
     while(Parent != nullptr)
     {
         if(atomicCAS(&(Parent->flag), 0 , 1))
         {
-            Parent->BBox.bEmpty = true;
+            //Parent->BBox.bEmpty = true;
             Parent->BBox.merge(Parent->childA->BBox);
             Parent->BBox.merge(Parent->childB->BBox);
 
             int idA = (int)((Parent->childA->isLeaf) ? (LeafNode*)Parent->childA - leafNodes: (InternalNode*)Parent->childA - internalNodes ) ;
             int idB = (int)((Parent->childB->isLeaf) ? (LeafNode*)Parent->childB - leafNodes: (InternalNode*)Parent->childB - internalNodes ) ;
-            printf("**********parent child relationships**********\n"
+            printf_DEBUG("**********parent child relationships**********\n"
                     "* parent idx (%d) bmin(%0.6f,%0.6f,%0.6f) bmax(%0.6f,%0.6f,%0.6f) \n"
-                    "* childA(%d) is_leaf(%d) bmin(%0.6f,%0.6f,%0.6f) bmax(%0.6f,%0.6f,%0.6f) \n"
-                    "* childB(%d) is_leaf(%d) bmin(%0.6f,%0.6f,%0.6f) bmax(%0.6f,%0.6f,%0.6f) \n",
+                    "* childA(%d) is_leaf(%d) ob=%d bmin(%0.6f,%0.6f,%0.6f) bmax(%0.6f,%0.6f,%0.6f) \n"
+                    "* childB(%d) is_leaf(%d) ob=%d bmin(%0.6f,%0.6f,%0.6f) bmax(%0.6f,%0.6f,%0.6f) \n",
                     (InternalNode*) Parent - internalNodes, Parent->BBox.bmin.x , Parent->BBox.bmin.y,Parent->BBox.bmin.z, Parent->BBox.bmax.x , Parent->BBox.bmax.y, Parent->BBox.bmax.z,
-                    idA, Parent->childA->isLeaf, Parent->childA->BBox.bmin.x, Parent->childA->BBox.bmin.y , Parent->childA->BBox.bmin.z, Parent->childA->BBox.bmax.x, Parent->childA->BBox.bmax.y, Parent->childA->BBox.bmax.z ,
-                    idB, Parent->childB->isLeaf, Parent->childB->BBox.bmin.x, Parent->childB->BBox.bmin.y , Parent->childB->BBox.bmin.z, Parent->childB->BBox.bmax.x, Parent->childB->BBox.bmax.y, Parent->childB->BBox.bmax.z );
+                    idA, Parent->childA->isLeaf, Parent->childA->object_id, Parent->childA->BBox.bmin.x, Parent->childA->BBox.bmin.y , Parent->childA->BBox.bmin.z, Parent->childA->BBox.bmax.x, Parent->childA->BBox.bmax.y, Parent->childA->BBox.bmax.z ,
+                    idB, Parent->childB->isLeaf, Parent->childB->object_id, Parent->childB->BBox.bmin.x, Parent->childB->BBox.bmin.y , Parent->childB->BBox.bmin.z, Parent->childB->BBox.bmax.x, Parent->childB->BBox.bmax.y, Parent->childB->BBox.bmax.z );
 
 
             Parent = Parent->parent;
@@ -200,6 +203,9 @@ void generateHierarchyKernel(unsigned int* sortedMortonCodes,
 
     internalNodes[idx].isLeaf = false ;
     internalNodes[idx].parent = nullptr ;
+    internalNodes[idx].BBox = BoundingBox();
+    internalNodes[idx].flag = 0;
+    //internalNodes[idx].node_id = idx;
 
     int2 range = determineRange(sortedMortonCodes, numTriangles, idx);
     int first = range.x;
@@ -215,7 +221,7 @@ void generateHierarchyKernel(unsigned int* sortedMortonCodes,
     if (split == first)
     {
         childA = &leafNodes[split];
-        childA->BBox = BBoxs[split];
+        //childA->BBox = BBoxs[split];
     }
     else
         childA = &internalNodes[split];
@@ -226,7 +232,7 @@ void generateHierarchyKernel(unsigned int* sortedMortonCodes,
     if (split + 1 == last)
     {
         childB = &leafNodes[split + 1];
-        childB->BBox = BBoxs[split + 1];
+        //childB->BBox = BBoxs[split + 1];
     }
     else
         childB = &internalNodes[split + 1];
@@ -284,10 +290,10 @@ int findSplit( unsigned int* sortedMortonCodes,
     return split;
 }
 
-__device__
+    __device__
 int2 determineRange(unsigned int* sortedMortonCodes, int numTriangles, int idx)
 {
-   //determine the range of keys covered by each internal node (as well as its children)
+    //determine the range of keys covered by each internal node (as well as its children)
     //direction is found by looking at the neighboring keys ki-1 , ki , ki+1
     //the index is either the beginning of the range or the end of the range
     int direction = 0;
@@ -347,7 +353,7 @@ int2 determineRange(unsigned int* sortedMortonCodes, int numTriangles, int idx)
 
     int left = 0 ; 
     int right = 0;
-    
+
     if(idx < j){
         left = idx;
         right = j;
@@ -385,3 +391,262 @@ unsigned int morton3D(double x, double y, double z)
     unsigned int zz = expandBits((unsigned int)z);
     return xx * 4 + yy * 2 + zz;
 }
+    __device__
+bool BVH_d::intersectTriangle(const ray& r, isect&  i, int object_id) const
+{
+
+    const TriangleIndices* ids = &t_indices[object_id];
+
+    const Vec3d* a = &vertices[ids->a.vertex_index];
+    const Vec3d* b = &vertices[ids->b.vertex_index];
+    const Vec3d* c = &vertices[ids->c.vertex_index];
+
+    /*
+       -DxAO = AOxD
+       AOx-D = -(-DxAO)
+       |-D AB AC| = -D*(ABxAC) = -D*normal = 1. 1x
+       |AO AB AC| = AO*(ABxAC) = AO*normal = 1. 
+       |-D AO AC| = -D*(AOxAC) = 1. 1x || AC*(-DxAO) = AC*M = 1. 1x
+       |-D AB AO| = -D*(ABxAO) = 1. 1x || (AOx-D)*AB = (DxAO)*AB = -M*AB = 1.
+       */
+    double mDet;
+    double mDetInv;
+    double alpha;
+    double beta;
+    double t;
+    //Moller-Trombore approach is a change of coordinates into a local uv space
+    // local to the triangle
+    Vec3d AB = *b - *a;
+    Vec3d AC = *c - *a;
+
+    Vec3d normal = AB ^ AC;
+    // if (normal * -r.getDirection() < 0) return false;
+    Vec3d P = r.getDirection() ^ AC;
+    mDet = AB * P;
+#if WITH_CULLING
+    if(mDet < RAY_EPSILON ) return false;   //With culling
+#else 
+    if(fabsf(mDet) < RAY_EPSILON ) return false; //Normal
+#endif
+    //if(mDet > -RAY_EPSILON && mDet < RAY_EPSILON ) return false; //Normal
+
+    mDetInv = 1/mDet;
+    Vec3d T = r.getPosition() - *a;
+    alpha = T * P * mDetInv;    
+    if(alpha < 0 || alpha > 1) return false;
+
+    Vec3d Q = T ^ AB;
+    beta = r.getDirection() * Q * mDetInv;
+    if(beta < 0 || alpha + beta > 1) return false;
+    t = AC * Q * mDetInv;
+
+    //if( t < RAY_EPSILON ) return false;
+    if(fabsf(t) < RAY_EPSILON) return false; // Jaysus this sucked
+    //i.bary = Vec3d(1 - (alpha + beta), alpha, beta);
+    //printf("t=%f\n", t);
+    //if( t < 0.0 ) return false;
+    i.t = t;
+
+
+    // std::cout << traceUI->smShadSw() << std::endl; 
+    // if(traceUI->smShadSw() && !parent->doubleCheck()){
+    //Smooth Shading
+    i.N = (1.0 - (alpha + beta))*normals[ids->a.normal_index] + \
+          alpha*normals[ids->b.normal_index] + \
+          beta*normals[ids->c.normal_index];
+    //i.N = normal;
+
+    //i.N = normal;
+
+    normalize(i.N);
+
+    i.object_id = object_id;
+
+    return true;
+
+
+}
+
+__device__
+void printBBox(const BoundingBox& b){
+    printf_DEBUG("[bmin(%f,%f,%f) bmax(%f,%f,%f)]", b.bmin.x, b.bmin.y, b.bmin.z,b.bmax.x, b.bmax.y, b.bmax.z);
+}
+__device__
+void printNode(const Node* node, int stackDepth){
+    printf("   ");
+    for(int i = 0; i < stackDepth; i++)
+        printf(" ");
+    if(node->isALeaf())
+        printf("LN: ");
+    else
+        printf("IN: ");
+    //printf("%d id=%d ob=%d ", stackDepth, node->node_id, node->object_id);
+    printBBox(node->BBox);
+    //printf("\n");
+}
+__device__
+bool BVH_d::intersect(const ray& r, isect& i) const{
+#if DORECURSIVE
+    i.t = 1.0e32;
+    return intersect(r, i, getRoot());
+#elif DOSEQ
+    //printf("HERE\n");
+    bool haveOne = false;
+    isect* cur = new isect();
+    double tmin, tmax;
+    //printf("HERE\n");
+    printf_DEBUG("Num Triangles %d\n", numTriangles);
+    for(int j = 0; j < numTriangles; j++){
+        //if(!BBoxs[object_ids[j]].intersect(r, tmin, tmax))
+        //    continue;
+        //if(BBoxs[object_ids[j]].intersect(r, tmin, tmax)){
+        if(BBoxs[object_ids[j]].intersect(r)){
+            printf_DEBUG("%d ", object_ids[j]);
+            printBBox(BBoxs[object_ids[j]]);
+            printf_DEBUG(" BX");
+            if(intersectTriangle(r, *cur, object_ids[j])){
+                printf_DEBUG(" TX");
+                if(!haveOne || (cur->t < i.t)){
+                    printf_DEBUG(" t=%f", cur->t);
+                    //printf("FOUND ONE t=%f\n",cur->t);
+                    i = *cur;
+                    haveOne = true;
+                }
+            }
+            printf_DEBUG("\n");
+        }else{
+            printf_DEBUG("[MISS] %d\n", object_ids[j]);
+
+        }
+    }
+    if(!haveOne) i.t = 1000.0;
+    delete cur;
+    //printf("Closest is %d, %f\n", i.object_id, i.t);
+    return haveOne;
+#elif ATTEMPT
+    Node* stack[64];
+    int topIndex = 64;
+    stack[--topIndex] = getRoot();
+    bool haveOne = false;
+    isect cur;// = new isect();
+    printf_DEBUG("HERE\n");
+    while (topIndex != 64){
+        Node* node = stack[topIndex++];
+        //printNode(node, 64-topIndex);
+        if(node->BBox.intersect(r)) {
+            printf_DEBUG(" BX");
+            if(node->isALeaf()){
+                if(intersectTriangle(r, cur, ((LeafNode*)node)->object_id)){
+                    printf_DEBUG(" TX");
+                    if((!haveOne || (cur.t < i.t))){
+                        printf_DEBUG(" t=%f", cur.t);
+                        //if((!haveOne || (cur->t < i.t)) && cur->t > RAY_EPSILON){
+                        i = cur;
+                        haveOne = true;
+                    }
+                    }
+
+                } else{
+                    stack[--topIndex] = node->childB;
+                    stack[--topIndex] = node->childA;
+                    if(topIndex < 0){
+                        printf("Intersect stack not big enough!\n");
+                        return false;
+                }
+            }
+
+    printf_DEBUG("\n");
+    __syncthreads();
+        }
+        //delete cur;
+        return haveOne;
+#else
+        bool haveOne = false;
+        double tMinA;
+        double tMaxA;
+        double tMinB;
+        double tMaxB;
+        Node* childL;
+        Node* childR;
+        bool overlapL;
+        bool overlapR;
+
+        // Allocate traversal stack from thread-local memory,
+        // and push NULL to indicate that there are no postponed nodes.
+        Node* stack[64];
+        //Node** stack = (Node**)malloc( 64*sizeof(Node*));
+        Node** stackPtr = stack;
+        *stackPtr = NULL; // push
+        stackPtr++;
+
+        // Traverse nodes starting from the root.
+        Node* node = getRoot();
+        if(!node->BBox.intersect(r, tMinA, tMaxA))
+            return false;
+        do
+        {
+            // Check each child node for overlap.
+            childL = node->childA;
+            childR = node->childB;
+            overlapL = childL->BBox.intersect(r, tMinA, tMaxA);
+            overlapR = childR->BBox.intersect(r, tMinB, tMaxB);
+
+            //                                printf("%d %d\n", overlapL, overlapR);
+
+            //                                printf("rp(%f, %f, %f), rd(%f,%f,%f) Node: %d\n", r.p.x,r.p.y,r.p.z,r.d.x,r.d.y,r.d.z, (InternalNode*)node - internalNodes);
+            // Query overlaps a leaf node => check intersect
+            if (overlapL && childL->isALeaf())
+            {
+                isect* cur = new isect();
+                if(intersectTriangle(r, *cur, ((LeafNode*)childL)->object_id)){
+
+                    if((!haveOne || (cur->t < i.t))){
+                        //if((!haveOne || (cur->t < i.t)) && cur->t > RAY_EPSILON){
+                        //                                            printf("LEFT FOUND ONE t=%f, N=(%f, %f, %f)f\n",cur->t, cur->N.x, cur->N.y, cur->N.z);
+                        i = *cur;
+                        haveOne = true;
+                    }
+                    }
+                    delete cur;
+                }
+
+                if (overlapR && childR->isALeaf())
+                {
+                    isect* cur = new isect();
+                    if(intersectTriangle(r, *cur, ((LeafNode*)childR)->object_id)){
+                        //if((!haveOne || (cur->t < i.t)) && cur->t > RAY_EPSILON){
+                        //                                            printf("RIGHT FOUND ONE t=%f, N=(%f, %f, %f)f\n",cur->t, cur->N.x, cur->N.y, cur->N.z);
+                        //printf("FOUND RIGHT\n");
+                        if(!haveOne || (cur->t < i.t)){
+                            //printf("FOUND ONE t=%f\n",cur->t);
+                            i = *cur;
+                            haveOne = true;
+                        }
+                    }
+                    delete cur;
+                    }
+
+                    // Query overlaps an internal node => traverse.
+                    bool traverseL = (overlapL && !childL->isALeaf());
+                    bool traverseR = (overlapR && !childR->isALeaf());
+
+                    if (!traverseL && !traverseR)
+                        node = *(--stackPtr); // pop
+                    else
+                    {
+                        node = (traverseL) ? childL : childR;
+                        if (traverseL && traverseR){
+                            *stackPtr = childR; // push
+                            stackPtr++;
+                        }
+
+                    }
+                }
+                while (node != NULL);
+                if(!haveOne) i.t = 1000.0;
+                //free(stack);
+                //printf("Closest is %d, %f\n", i.object_id, i.t);
+                return haveOne;
+#endif
+            }
+

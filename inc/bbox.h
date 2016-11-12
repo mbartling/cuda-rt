@@ -3,6 +3,7 @@
 #include "ray.h"
 #include "vec.h"
 #define USENEW 0
+#define USEHACK 1
 
 class BoundingBox {
     public:
@@ -17,7 +18,7 @@ class BoundingBox {
     public:
 
      __host__ __device__
-        BoundingBox() : bEmpty(true) {}
+        BoundingBox() : bEmpty(true) {bmax = -1.0e307; bmin = 1.0e307;}
 
     __host__ __device__
         BoundingBox(Vec3d bMin, Vec3d bMax) : bmin(bMin), bmax(bMax), bEmpty(false), dirty(true) {}
@@ -78,6 +79,29 @@ class BoundingBox {
     // in tMax and return true, else return false.
     // Using Kay/Kajiya algorithm.
     __host__ __device__
+        bool intersect(const ray& r) const {
+            //double t_xmin, t_xmax, t_ymin, t_ymax, t_zmin, t_zmax;
+            double tMin, tMax;
+            double t_min[3];
+            double t_max[3];
+            double a[3] = {1.0/(r.d.x), 1.0/(r.d.y), 1.0/(r.d.z)};
+            double e[3] = {r.p.x, r.p.y, r.p.z};
+            for(int i = 0; i < 3; i++){
+                if(a[i] >= 0){
+                    t_min[i] = (getMin()[i] - e[i])*a[i];
+                    t_max[i] = (getMax()[i] - e[i])*a[i];
+                } else{
+                    t_max[i] = (getMin()[i] - e[i])*a[i];
+                    t_min[i] = (getMax()[i] - e[i])*a[i];
+                }
+
+            }
+                tMin = fmax(fmax(t_min[0], t_min[1]), t_min[2]);
+                tMax = fmin(fmin(t_max[0], t_max[1]), t_max[2]);
+                return (tMin <= tMax);
+        }
+
+    __host__ __device__
         bool intersect(const ray& r, double& tMin, double& tMax) const {
 #if USENEW
             Vec3d tmp = r.d;
@@ -108,8 +132,8 @@ class BoundingBox {
                 tymax = (bmin.y - r.p.y) * invdir.y;
                 tymin = (bmax.y - r.p.y) * invdir.y;
             }
-//            if( (tMin > tymax) || (tymin > tMax))
-//                return false;
+            if( (tMin > tymax) || (tymin > tMax))
+                return false;
             if (tymin > tMin)
                 tMin = tymin;
             if (tymax > tMax)
@@ -139,9 +163,32 @@ class BoundingBox {
             tMax = 1.0e307;
             double ttemp;
 
-            double vd = r.d.x;
+            //double vd1[3]= {r.d.x, r.d.y, r.d.z};
+            //double vp1[3]= {r.p.x, r.p.y, r.p.z};
             double v1, v2, t1, t2;
             // if the ray is parallel to the face's plane (=0.0)
+            for(int i = 0; i < 3; i++)
+            {
+                if( r.d[i] != 0.0 ){
+                    v1 = bmin[i] - r.p[i];
+                    v2 = bmax[i] - r.p[i];
+                    // two slab intersections
+                    t1 = v1/r.d[i];
+                    t2 = v2/r.d[i];
+                    if ( t1 > t2 ) { // swap t1 & t2
+                        ttemp = t1;
+                        t1 = t2;
+                        t2 = ttemp;
+                    }
+                    if (t1 > tMin) tMin = t1;
+                    if (t2 < tMax) tMax = t2;
+                    if (tMin > tMax) return false; // box is missed
+                    if (tMax < RAY_EPSILON) return false; // box is behind ray
+                }
+
+            }
+
+            /*
             if( vd != 0.0 ){
                 v1 = bmin.x - r.p.x;
                 v2 = bmax.x - r.p.x;
@@ -194,6 +241,7 @@ class BoundingBox {
                 if (tMin > tMax) return false; // box is missed
                 if (tMax < RAY_EPSILON) return false; // box is behind ray
             }
+            */
             return true; // it made it past all 3 axes.
 #endif
         }
@@ -230,8 +278,8 @@ class BoundingBox {
 
     __host__ __device__
         void merge(const BoundingBox& bBox)	{
-            if (bBox.bEmpty) return;
-            
+            //if (bBox.bEmpty) return;
+            /*
             if (bEmpty || bBox.bmin.x < bmin.x) bmin.x = bBox.bmin.x;
             if (bEmpty || bBox.bmax.x > bmax.x) bmax.x = bBox.bmax.x;
 
@@ -240,8 +288,16 @@ class BoundingBox {
             
             if (bEmpty || bBox.bmin.z < bmin.z) bmin.z = bBox.bmin.z;
             if (bEmpty || bBox.bmax.z > bmax.z) bmax.z = bBox.bmax.z;
+            */
+            bmin.x = fmin(bmin.x, bBox.bmin.x);
+            bmin.y = fmin(bmin.y, bBox.bmin.y);
+            bmin.z = fmin(bmin.z, bBox.bmin.z);
             
-            dirty = true;
+            bmax.x = fmax(bmax.x, bBox.bmax.x);
+            bmax.y = fmax(bmax.y, bBox.bmax.y);
+            bmax.z = fmax(bmax.z, bBox.bmax.z);
+            
+            //dirty = true;
             bEmpty = false;
         }
 };

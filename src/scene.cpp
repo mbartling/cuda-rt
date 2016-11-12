@@ -96,6 +96,8 @@ Scene_d& Scene_d::operator = (const Scene_h& hostScene){
     cudaMemcpy(materials, hostScene.materials.data(), numMaterials*sizeof(Material), cudaMemcpyHostToDevice);
     cudaMemcpy(camera, hostScene.camera, sizeof(Camera), cudaMemcpyHostToDevice);
 
+    std::cout << "Done Copying basic objects to device" << std::endl;
+
     computeBoundingBoxes();
     cudaDeviceSynchronize();
     std::cout << "Post Scene BBoxes " << cudaGetErrorString(cudaGetLastError()) << std::endl;
