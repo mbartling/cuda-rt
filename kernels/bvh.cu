@@ -75,8 +75,8 @@ void BVH_d::setupLeafNodes(){
 }
 void BVH_d::buildTree(){
     int threadsPerBlock = 256;
-    int blocksPerGrid =
-        (numTriangles - 1 + threadsPerBlock - 1) / threadsPerBlock;
+    int blocksPerGrid = (numTriangles + threadsPerBlock - 1) / threadsPerBlock;
+    //int blocksPerGrid = (numTriangles - 1 + threadsPerBlock - 1) / threadsPerBlock;
     setupLeafNodesKernel<<<blocksPerGrid, threadsPerBlock>>>(object_ids, BBoxs, leafNodes, numTriangles);
     cudaDeviceSynchronize();
     std::cout << "Post set up leaf nodes " << cudaGetErrorString(cudaGetLastError()) << std::endl;
@@ -154,9 +154,11 @@ void computeBBoxesKernel( LeafNode* leafNodes, InternalNode* internalNodes, int 
 
     printf_DEBUG("* LEAF(%d) BB bmin(%0.6f,%0.6f,%0.6f) bmax(%0.6f,%0.6f,%0.6f) \n",idx, leafNodes[idx].BBox.bmin.x, leafNodes[idx].BBox.bmin.y, leafNodes[idx].BBox.bmin.z, leafNodes[idx].BBox.bmax.x, leafNodes[idx].BBox.bmax.y, leafNodes[idx].BBox.bmax.z);
     Node* Parent = leafNodes[idx].parent;
-    while(Parent != nullptr)
+    //while(Parent != nullptr)
+    do
     {
         if(atomicCAS(&(Parent->flag), 0 , 1))
+        //if(!atomicAdd(&(Parent->flag), 1))
         {
             //Parent->BBox.bEmpty = true;
             Parent->BBox.merge(Parent->childA->BBox);
@@ -182,12 +184,27 @@ void computeBBoxesKernel( LeafNode* leafNodes, InternalNode* internalNodes, int 
 
 
 
-    }
+    } while (Parent != nullptr);
 
 
 
 }
 
+__device__
+int delta(const unsigned int* smc, int a, int b, int n){
+    bool tie = false;
+    bool outOfRange = (b < 0 || b > n -1);
+    int bb = (outOfRange) ? 0 : b;
+    unsigned int aCode = smc[a];
+    unsigned int bCode = smc[bb];
+    unsigned int exor = aCode ^ bCode;
+    tie = (exor == 0);
+    exor = tie ? a ^ bb : exor;
+    int count = __clz(exor);
+    if(tie) count += 32;
+    count = (outOfRange) ? -1 : count;
+    return count;
+}
     __global__ 
 void generateHierarchyKernel(unsigned int* sortedMortonCodes,
         unsigned int* sorted_object_ids, 
@@ -205,7 +222,7 @@ void generateHierarchyKernel(unsigned int* sortedMortonCodes,
     internalNodes[idx].BBox = BoundingBox();
     internalNodes[idx].flag = 0;
     //internalNodes[idx].node_id = idx;
-
+/*
     int2 range = determineRange(sortedMortonCodes, numTriangles, idx);
     int first = range.x;
     int last = range.y;
@@ -242,7 +259,60 @@ void generateHierarchyKernel(unsigned int* sortedMortonCodes,
     internalNodes[idx].childB = childB;
     childA->parent = &internalNodes[idx];
     childB->parent = &internalNodes[idx];
+*/
+    int d = ((delta(sortedMortonCodes, idx, idx +1, numTriangles) - delta(sortedMortonCodes, idx, idx-1, numTriangles)) < 0) ? -1 : 1;
 
+    int delMin = delta(sortedMortonCodes, idx, idx - d, numTriangles);
+    int lmax = 2;
+    while (delta(sortedMortonCodes, idx, idx + lmax*d, numTriangles) > delMin){
+        lmax = lmax * 2;
+    }
+    int l = 0;
+    for(int t = lmax/2; t >= 1; t /= 2){
+        if(delta(sortedMortonCodes, idx, idx + (l+t)*d, numTriangles) > delMin)
+            l += t;
+    }
+
+    int j = idx + l*d;
+    int deltaNode = delta(sortedMortonCodes, idx, j, numTriangles);
+    int s = 0;
+    float divFactor = 2.f;
+    for(int t = (int)ceil(l/divFactor);; divFactor*=2, t = (int)ceil(l/divFactor)){
+        if(delta(sortedMortonCodes, idx, idx + (s+t)*d, numTriangles) > deltaNode)
+            s += t;
+
+        if(t == 1)
+            break;
+    }
+    int split = idx + s*d + min(d,0);
+    
+    Node* childA;
+    if (min(idx,j) == split)
+    {
+        childA = &leafNodes[split];
+        //childA->BBox = BBoxs[split];
+    }
+    else
+        childA = &internalNodes[split];
+
+    // Select childB.
+
+    Node* childB;
+    if (max(idx, j) == split + 1)
+    {
+        childB = &leafNodes[split + 1];
+        //childB->BBox = BBoxs[split + 1];
+    }
+    else
+        childB = &internalNodes[split + 1];
+
+    // Record parent-child relationships.
+
+    internalNodes[idx].childA = childA;
+    internalNodes[idx].childB = childB;
+    childA->parent = &internalNodes[idx];
+    childB->parent = &internalNodes[idx];
+    
 }
 //===========END KERNELS=============================
 //===========END KERNELS=============================
@@ -289,8 +359,32 @@ int findSplit( unsigned int* sortedMortonCodes,
     return split;
 }
 
+__device__ 
+int mDelta(unsigned int* m, int i, int j, int n){
+    if (j < 0 || j > (n - 1))
+        return -1;
+    else
+        return __clz(m[i] ^ m[j]);
+}
+
+__device__
+int2 determineRange(unsigned int* sortedmortoncodes, int numtriangles, int idx){
+    int d = ((delta(sortedmortoncodes, idx, idx +1, numtriangles) - delta(sortedmortoncodes, idx, idx-1, numtriangles)) < 0) ? -1 : 1;
+
+    int delMin = delta(sortedmortoncodes, idx, idx - d, numtriangles);
+    int lmax = 2;
+    while (delta(sortedmortoncodes, idx, idx + lmax*d, numtriangles) > delMin){
+        lmax = lmax * 2;
+    }
+    int l = 0;
+    for(int t = lmax/2; t >= 1; t /= 2){
+        if(delta(sortedmortoncodes, idx, idx + (l+t)*d, numtriangles) > delMin)
+            l += t;
+    }
+    return make_int2(idx, idx + l*d);
+}
     __device__
-int2 determineRange(unsigned int* sortedMortonCodes, int numTriangles, int idx)
+int2 determineRange(unsigned int* sortedmortoncodes, int numtriangles, int idx, int DUMMY)
 {
     //determine the range of keys covered by each internal node (as well as its children)
     //direction is found by looking at the neighboring keys ki-1 , ki , ki+1
@@ -299,57 +393,90 @@ int2 determineRange(unsigned int* sortedMortonCodes, int numTriangles, int idx)
     int common_prefix_with_left = 0;
     int common_prefix_with_right = 0;
 
-    common_prefix_with_right = __clz(sortedMortonCodes[idx] ^ sortedMortonCodes[idx + 1]);
-    if(idx == 0){
+    common_prefix_with_right = __clz(sortedmortoncodes[idx] ^ sortedmortoncodes[idx + 1]);
+    if(idx <= 0){
         common_prefix_with_left = -1;
     }
     else
     {
-        common_prefix_with_left = __clz(sortedMortonCodes[idx] ^ sortedMortonCodes[idx - 1]);
-
+        common_prefix_with_left = __clz(sortedmortoncodes[idx] ^ sortedmortoncodes[idx - 1]);
     }
 
-    direction = ( (common_prefix_with_right - common_prefix_with_left) > 0 ) ? 1 : -1;
+    //direction = ( (common_prefix_with_right - common_prefix_with_left) >= 0 ) ? 1 : -1;
+    direction = (common_prefix_with_right - common_prefix_with_left);
+    direction = (direction > 0) - (direction < 0); //Fast Sign
     int min_prefix_range = 0;
 
-    if(idx == 0)
+    if(idx - direction < 0 || idx - direction > numtriangles - 1)
     {
         min_prefix_range = -1;
 
     }
     else
     {
-        min_prefix_range = __clz(sortedMortonCodes[idx] ^ sortedMortonCodes[idx - direction]); 
+        min_prefix_range = __clz(sortedmortoncodes[idx] ^ sortedmortoncodes[idx - direction]); 
     }
 
     int lmax = 2;
+    int next_prefix;// = idx + lmax*direction;
+    do{
+        int next_key = idx + lmax*direction;
+        if ( next_key < 0 || next_key > (numtriangles -1))
+            next_prefix = -1;
+        else
+            next_prefix = __clz(sortedmortoncodes[idx] ^ sortedmortoncodes[next_key]);
+        lmax *= 2;
+    }while( next_prefix > min_prefix_range);
+/*
     int next_key = idx + lmax*direction;
-
-    while((next_key >= 0) && (next_key <  numTriangles) && (__clz(sortedMortonCodes[idx] ^ sortedMortonCodes[next_key]) > min_prefix_range))
+    while((next_key >= 0) && (next_key <  numtriangles) && (__clz(sortedmortoncodes[idx] ^ sortedmortoncodes[next_key]) > min_prefix_range))
     {
         lmax *= 2;
         next_key = idx + lmax*direction;
     }
+*/
     //find the other end using binary search
     unsigned int l = 0;
 
+    // Use binary search to find where the next bit differs.
+    // Specifically, we are looking for the highest object that
+    // shares more than min prefix range bits with the first one.
+
+    int split = idx; // initial guess
+    int step = lmax;
+/*
+    do
+    {
+        step = (step + 1) >> 1; // exponential decrease //Ceiling
+        int newSplit = split + step; // proposed new position
+
+        if (newSplit < last)
+        {
+            unsigned int splitCode = sortedMortonCodes[newSplit];
+            int splitPrefix = __clz(firstCode ^ splitCode);
+            if (splitPrefix > min_prefix_range)
+                split = newSplit; // accept proposal
+        }
+    }
+    while (step > 1);
+    */
     //do
     while (lmax >= 1)
     {
         //lmax = (lmax + 1) >> 1; // exponential decrease
-        lmax = lmax >> 1; // exponential decrease // No Ceiling
+        lmax = lmax >> 1; // exponential decrease // no ceiling
         int new_val = idx + (l + lmax)*direction ; 
 
-        if(new_val >= 0 && new_val < numTriangles )
+        if(new_val >= 0 && new_val < numtriangles )
         {
-            unsigned int Code = sortedMortonCodes[new_val];
-            int Prefix = __clz(sortedMortonCodes[idx] ^ Code);
-            if (Prefix > min_prefix_range)
+            unsigned int code = sortedmortoncodes[new_val];
+            int prefix = __clz(sortedmortoncodes[idx] ^ code);
+            if (prefix > min_prefix_range)
                 l = l + lmax;
         }
     }
     //while (lmax > 1);
-
+    
     int j = idx + l*direction;
 
     int left = 0 ; 
@@ -365,22 +492,22 @@ int2 determineRange(unsigned int* sortedMortonCodes, int numTriangles, int idx)
         right = idx;
     }
 
-    printf_DEBUG("idx : (%d) returning range (%d, %d) \n" , idx , left, right);
+    //printf_DEBUG("idx : (%d) returning range (%d, %d) \n" , idx , left, right);
 
     return make_int2(left,right);
 }
     __device__
 unsigned int expandBits(unsigned int v)
 {
-    v = (v * 0x00010001u) & 0xFF0000FFu;
-    v = (v * 0x00000101u) & 0x0F00F00Fu;
-    v = (v * 0x00000011u) & 0xC30C30C3u;
+    v = (v * 0x00010001u) & 0xff0000ffu;
+    v = (v * 0x00000101u) & 0x0f00f00fu;
+    v = (v * 0x00000011u) & 0xc30c30c3u;
     v = (v * 0x00000005u) & 0x49249249u;
     return v;
 }
 
-// Calculates a 30-bit Morton code for the
-// given 3D point located within the unit cube [0,1].
+// calculates a 30-bit morton code for the
+// given 3d point located within the unit cube [0,1].
     __device__
 unsigned int morton3D(double x, double y, double z)
 {
