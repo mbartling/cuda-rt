@@ -35,7 +35,8 @@ int2 determineRange(unsigned int* sortedMortonCodes, int numTriangles, int idx);
 
 __global__ 
 void computeMortonCodesKernel(unsigned int* mortonCodes, unsigned int* object_ids, 
-        BoundingBox* BBoxs, int numTriangles, Vec3d mMin, Vec3d mMax);
+        BoundingBox* BBoxs,TriangleIndices* t_indices, Vec3d* vertices, int numTriangles, Vec3d mMin, Vec3d mMax);
+
 __global__ 
 void setupLeafNodesKernel(unsigned int* sorted_object_ids, BoundingBox* BBoxs,
         LeafNode* leafNodes, int numTriangles);
@@ -55,7 +56,7 @@ void BVH_d::computeMortonCodes(Vec3d& mMin, Vec3d& mMax){
     int threadsPerBlock = 256;
     int blocksPerGrid =
         (numTriangles + threadsPerBlock - 1) / threadsPerBlock;
-    computeMortonCodesKernel<<<blocksPerGrid, threadsPerBlock>>>(mortonCodes, object_ids, BBoxs, numTriangles, mMin , mMax);
+    computeMortonCodesKernel<<<blocksPerGrid, threadsPerBlock>>>(mortonCodes, object_ids, BBoxs, t_indices, vertices, numTriangles, mMin , mMax);
 
 }
 void BVH_d::sortMortonCodes(){
@@ -111,13 +112,18 @@ void bvh(Scene_h& scene_h)
 // This kernel just computes the object id and morton code for the centroid of each bounding box
 __global__ 
 void computeMortonCodesKernel(unsigned int* mortonCodes, unsigned int* object_ids, 
-        BoundingBox* BBoxs, int numTriangles, Vec3d mMin , Vec3d mMax){
+        BoundingBox* BBoxs, TriangleIndices* t_indices, Vec3d* vertices, int numTriangles, Vec3d mMin , Vec3d mMax){
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx >= numTriangles)
         return;
 
     object_ids[idx] = idx;
-    Vec3d centroid = computeCentroid(BBoxs[idx]);
+    const TriangleIndices* ids = &t_indices[idx];
+
+    Vec3d a = vertices[ids->a.vertex_index];
+    Vec3d b = vertices[ids->b.vertex_index];
+    Vec3d c = vertices[ids->c.vertex_index];
+    Vec3d centroid = (a + b + c)/3.0;//= computeCentroid(BBoxs[idx]);
     centroid.x = (centroid.x - mMin.x)/(mMax.x - mMin.x);
     centroid.y = (centroid.y - mMin.y)/(mMax.y - mMin.y);
     centroid.z = (centroid.z - mMin.z)/(mMax.z - mMin.z);
