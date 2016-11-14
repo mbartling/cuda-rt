@@ -15,7 +15,8 @@ Camera::Camera(){
     u = Vec3d(1.f,0.f,0.f);
     v = Vec3d(0.f,1.f,0.f);
     look = Vec3d(0.f,0.f,-1.f);
-    fstop = 22.0;
+    //fstop = 22.0;
+    fstop = 8.0;
     fov  = 30;
 }
 

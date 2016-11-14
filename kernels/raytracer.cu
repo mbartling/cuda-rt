@@ -125,7 +125,7 @@ void runRayTracerKernelRec(Scene_d* scene, int depth){
     //           scene->getCamera()->rayThrough(x, y, r);
     double invWidth = 1.0 / double(scene->imageWidth), invHeight = 1.0 / double(scene->imageHeight);
     double fov = 35, aspectratio = double(scene->imageWidth) / double(scene->imageHeight);
-    double focalPoint = 7;
+    double focalPoint = 10;
     double angle = tan(M_PI * 0.5 * fov / 180.0f);
     double xx = (2 * ((px + 0.5) * invWidth) - 1)*angle*aspectratio;
     double yy = (1 - 2 * ((py + 0.5) * invHeight)) * angle;
@@ -134,7 +134,7 @@ void runRayTracerKernelRec(Scene_d* scene, int depth){
 #if DEBUG_BVH
     int N = 1;
 #else
-    int N = 5;
+    int N = 20;
 #endif
     //double focalDistance = 70.0/1000.0;
     //double lenseDistance = 1.0/(1.0/focalDistance - 1.0/focusPoint); //Doesnt matter
