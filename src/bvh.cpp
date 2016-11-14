@@ -12,8 +12,9 @@ void BVH_d::setUp(Vec3d* mvertices, Vec3d* mnormals, BoundingBox* mBBoxs, Triang
     cudaMalloc(&mortonCodes, numTriangles*sizeof(unsigned int));
     cudaMalloc(&object_ids, numTriangles*sizeof(unsigned int));
     
-    cudaMalloc(&leafNodes, numTriangles*sizeof(LeafNode));
-    cudaMalloc(&internalNodes, (numTriangles - 1)*sizeof(InternalNode));
+    cudaMalloc(&nodes, (2*numTriangles - 1)*sizeof(HNode));
+    cudaMalloc(&sortedBBoxs, (2*numTriangles - 1)*sizeof(HNode));
+    cudaMalloc(&flags, (numTriangles - 1)*sizeof(int));
 
     // Set up for the BVH Build
     computeMortonCodes(mMin, mMax);
@@ -34,6 +35,7 @@ void BVH_d::setUp(Vec3d* mvertices, Vec3d* mnormals, BoundingBox* mBBoxs, Triang
 BVH_d::~BVH_d(){
     cudaFree(mortonCodes);
     cudaFree(object_ids);
-    cudaFree(leafNodes);
-    cudaFree(internalNodes);
+    cudaFree(sortedBBoxs);
+    cudaFree(nodes);
+    cudaFree(flags);
 }

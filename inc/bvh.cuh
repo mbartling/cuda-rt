@@ -15,42 +15,28 @@
 #define WITH_CULLING 0
 class Scene_d;
 
-struct Node{
-    Node* childA;
-    Node* childB;
-    Node* parent;
-    int flag;
-    bool isLeaf;
-    BoundingBox BBox;
-    unsigned int object_id;
-    //unsigned int node_id; //debugging
+struct HNode{
+    int parent;
+    int left;
+    int right;
+    int next;
+};
 
-    __device__ 
-        Node() : isLeaf(false) , flag(0), parent(nullptr) {}
-    __device__
-        bool isALeaf() const {return isLeaf;}
-};
-struct LeafNode : public Node {
+#define LEAFNODE(x)  (((x).left) == ((x).right))
+#define LEAFIDX(i) ((numprims-1) + i)
+#define TOLEAFIDX(i) (i - (numprims-1) )
+#define NODEIDX(i) (i)
 
-    __device__
-        LeafNode() {
-            this->isLeaf = true;
-        }
-};
-struct InternalNode : public Node {
-    __device__
-        InternalNode() {
-            this->isLeaf = false;
-        }
-};
 //Device BVH
 class BVH_d {
     private:
-        unsigned int* mortonCodes;
+        int* mortonCodes;
         unsigned int* object_ids;
 
-        LeafNode*       leafNodes; //numTriangles
-        InternalNode*   internalNodes; //numTriangles - 1
+        HNode* nodes;
+        BoundingBox* sortedBBoxs;
+        int* flags;
+
 
         // These are stored in the scene
         int numTriangles;
@@ -61,8 +47,6 @@ class BVH_d {
         Material* materials;
         int* material_ids;       
 
-        __device__
-            Node* getRoot() const { return &internalNodes[0];}
 
     public:
 
@@ -78,43 +62,12 @@ class BVH_d {
             bool intersectTriangle(const ray& r, isect&  i, int object_id) const;
 
 
-            __device__
-                bool intersect(const ray& r, isect& i, Node* node) const {
-                    bool haveOne = false;
-                    double tMin;
-                    double tMax;
-
-                    if(!node->BBox.intersect(r, tMin, tMax))
-                        return false;
-
-                    if(node->isLeaf){
-                        isect* cur = new isect();
-                        if(intersectTriangle(r, *cur, ((LeafNode*)node)->object_id)){
-                           // if(cur->t < i.t && cur->t > RAY_EPSILON){
-                            if(cur->t < i.t){
-                                i = *cur;
-                                haveOne = true;
-                            }
-
-                        } 
-
-                        delete cur;
-                        return haveOne;
-
-                        } //if leaf
-                        else{
-                            // Sanity
-                            return intersect(r, i, node->childA) || intersect(r, i, node->childB);
-                        }
+        __device__
+            bool intersect(const ray& r, isect& i) const;
 
 
-                    }
-                    __device__
-                        bool intersect(const ray& r, isect& i) const;
+};
 
-
-                };
-
-            class Scene_h;
-            void bvh(Scene_h& scene_h);
+class Scene_h;
+void bvh(Scene_h& scene_h);
 

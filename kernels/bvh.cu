@@ -6,51 +6,259 @@
 #include "debug.h"
 
 
-__global__ void hello()
+// The following two functions are from
+// // http://devblogs.nvidia.com/parallelforall/thinking-parallel-part-iii-tree-construction-gpu/
+// // Expands a 10-bit integer into 30 bits
+// // by inserting 2 zeros after each bit.
+    __device__
+unsigned int ExpandBits(unsigned int v)
 {
-    printf_DEBUG("Hello world! I'm a thread in block %d\n", blockIdx.x);
+    v = (v * 0x00010001u) & 0xFF0000FFu;
+    v = (v * 0x00000101u) & 0x0F00F00Fu;
+    v = (v * 0x00000011u) & 0xC30C30C3u;
+    v = (v * 0x00000005u) & 0x49249249u;
+    return v;
+}
+    __device__
+unsigned int CalculateMortonCode(Vec3d p)
+{
+    float x = (float)min(max(p.x * 1024.0f, 0.0f), 1023.0f);
+    float y = (float)min(max(p.y * 1024.0f, 0.0f), 1023.0f);
+    float z = (float)min(max(p.z * 1024.0f, 0.0f), 1023.0f);
+    unsigned int xx = ExpandBits((unsigned int)x);
+    unsigned int yy = ExpandBits((unsigned int)y);
+    unsigned int zz = ExpandBits((unsigned int)z);
+    return xx * 4 + yy * 2 + zz;
+}
+
+
+// This kernel just computes the object id and morton code for the centroid of each bounding box
+__global__ 
+void computeMortonCodesKernel(int* mortonCodes, unsigned int* object_ids, 
+        BoundingBox* BBoxs, TriangleIndices* t_indices, Vec3d* vertices, int numTriangles, Vec3d mMin , Vec3d mMax){
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= numTriangles)
+        return;
+
+    object_ids[idx] = idx;
+    /*
+       const TriangleIndices* ids = &t_indices[idx];
+
+       Vec3d a = vertices[ids->a.vertex_index];
+       Vec3d b = vertices[ids->b.vertex_index];
+       Vec3d c = vertices[ids->c.vertex_index];
+       Vec3d centroid = (a + b + c)/3.0;//= computeCentroid(BBoxs[idx]);
+       */
+    BoundingBox bound = BBoxs[idx];
+    Vec3d centroid = 0.5*(bound.bmin + bound.bmax);
+    centroid.x = (centroid.x - mMin.x)/(mMax.x - mMin.x);
+    centroid.y = (centroid.y - mMin.y)/(mMax.y - mMin.y);
+    centroid.z = (centroid.z - mMin.z)/(mMax.z - mMin.z);
+    //map this centroid to unit cube
+    mortonCodes[idx] = CalculateMortonCode(centroid);//morton3D(centroid.x, centroid.y, centroid.z);
+    printf_DEBUG("in computeMortonCodesKernel: idx->%d , mortonCode->%d, centroid(%0.6f,%0.6f,%0.6f)\n", idx, mortonCodes[idx], centroid.x, centroid.y, centroid.z);
+
+};
+
+__device__
+BoundingBox bboxunion(BoundingBox b1, BoundingBox b2){
+    BoundingBox res;
+    res.bmin = minimum(b1.bmin, b2.bmin);
+    res.bmax = maximum(b1.bmax, b2.bmax);
+    return res;
+}
+
+__device__
+int delta(int* mortoncodes, int numprims, int i1, int i2){
+    // Select left end
+    int left = min(i1, i2);
+    // Select right end
+    int right = max(i1, i2);
+    // This is to ensure the node breaks if the index is out of bounds
+    if (left < 0 || right >= numprims) 
+    {
+        return -1;
+    }
+    // Fetch Morton codes for both ends
+    int leftcode = mortoncodes[left];
+    int rightcode = mortoncodes[right];
+
+    // Special handling of duplicated codes: use their indices as a fallback
+    return leftcode != rightcode ? __clz(leftcode ^ rightcode) : (32 + __clz(left ^ right));
+}
+
+#define DELTA(i,j) delta(mortoncodes,numprims,i,j)
+
+__device__
+int sign(float x){
+    if(x > 0) return 1;
+    else if(x == -0.0) return -0;
+    else if(x == 0.0) return 0;
+    else if(x < 0) return -1;
+    else return 0; //NAN case
+}
+__device__ 
+int2 FindSpan(int* mortoncodes, int numprims, int idx){
+    // Find the direction of the range
+    int d = sign((float)(DELTA(idx, idx+1) - DELTA(idx, idx-1)));
+
+    // Find minimum number of bits for the break on the other side
+    int deltamin = DELTA(idx, idx-d);
+
+    // Search conservative far end
+    int lmax = 2;
+    while (DELTA(idx,idx + lmax * d) > deltamin)
+        lmax *= 2;
+
+    // Search back to find exact bound
+    // with binary search
+    int l = 0;
+    int t = lmax;
+    do
+    {
+        t /= 2;
+        if(DELTA(idx, idx + (l + t)*d) > deltamin)
+        {
+            l = l + t;
+        }
+    }
+    while (t > 1);
+
+    // Pack span 
+    int2 span;
+    span.x = min(idx, idx + l*d);
+    span.y = max(idx, idx + l*d);
+    return span;
 
 }
-// Expands a 10-bit integer into 30 bits
-// // by inserting 2 zeros after each bit.
-__device__
-unsigned int expandBits(unsigned int v);
+    __device__
+int FindSplit(int* mortoncodes, int numprims, int2 span)
+{
+    // Fetch codes for both ends
+    int left = span.x;
+    int right = span.y;
 
-// Calculates a 30-bit Morton code for the
-// given 3D point located within the unit cube [0,1].
-__device__
-unsigned int morton3D(double x, double y, double z);
+    // Calculate the number of identical bits from higher end
+    int numidentical = DELTA(left, right);
 
-__device__ __inline__
-Vec3d computeCentroid(const BoundingBox& BBox){
-    return (BBox.getMin() + BBox.getMax()) / 2.0f;
-};
-__device__
-int findSplit(  unsigned int* sortedMortonCodes,
-        int first,
-        int last);
+    do
+    {
+        // Proposed split
+        int newsplit = (right + left) / 2;
 
-__device__
-int2 determineRange(unsigned int* sortedMortonCodes, int numTriangles, int idx);
+        // If it has more equal leading bits than left and right accept it
+        if (DELTA(left, newsplit) > numidentical)
+        {
+            left = newsplit;
+        }
+        else
+        {
+            right = newsplit;
+        }
+    }
+    while (right > left + 1);
 
-__global__ 
-void computeMortonCodesKernel(unsigned int* mortonCodes, unsigned int* object_ids, 
-        BoundingBox* BBoxs,TriangleIndices* t_indices, Vec3d* vertices, int numTriangles, Vec3d mMin, Vec3d mMax);
+    return left;
+}
 
-__global__ 
-void setupLeafNodesKernel(unsigned int* sorted_object_ids, BoundingBox* BBoxs,
-        LeafNode* leafNodes, int numTriangles);
+__global__
+void BuildHierarchy(int* mortoncodes, BoundingBox* bounds, unsigned int* indices, int numprims, HNode* nodes, BoundingBox* boundssorted, int* flags){
 
-__global__ 
-void computeBBoxesKernel( LeafNode* leafNodes,
-        InternalNode* internalNodes,
-        int numTriangles);
+    int globalid = blockIdx.x * blockDim.x + threadIdx.x;
+    // Set child
+    if (globalid < numprims)
+    {
+        nodes[LEAFIDX(globalid)].left = nodes[LEAFIDX(globalid)].right = indices[globalid];
+        boundssorted[LEAFIDX(globalid)] = bounds[indices[globalid]];
+    }
 
-__global__ 
-void generateHierarchyKernel(unsigned int* mortonCodes,
-        unsigned int* sorted_object_ids, 
-        InternalNode* internalNodes,
-        LeafNode* leafNodes, int numTriangles, BoundingBox* BBoxs);
+    // Set internal nodes
+    if (globalid < numprims - 1)
+    {
+        flags[NODEIDX(globalid)] = 0;
+        // Find span occupied by the current node
+        int2 range = FindSpan(mortoncodes, numprims, globalid);
+
+        // Find split position inside the range
+        int  split = FindSplit(mortoncodes, numprims, range);
+
+        // Create child nodes if needed
+        int c1idx = (split == range.x) ? LEAFIDX(split) : NODEIDX(split);
+        int c2idx = (split + 1 == range.y) ? LEAFIDX(split + 1) : NODEIDX(split + 1);
+
+        nodes[NODEIDX(globalid)].left = c1idx;
+        nodes[NODEIDX(globalid)].right = c2idx;
+        //nodes[NODEIDX(globalid)].next = (range.y + 1 < numprims) ? range.y + 1 : -1;
+        nodes[c1idx].parent = NODEIDX(globalid);
+        //nodes[c1idx].next = c2idx;
+        nodes[c2idx].parent = NODEIDX(globalid);
+        //nodes[c2idx].next = nodes[NODEIDX(globalid)].next;
+        //if(globalid == 0){
+        //printf("IDX(%d) L(%d), R(%d), range=[%d,%d], sp(%d)\n",globalid, TOLEAFIDX(c1idx),TOLEAFIDX(c2idx), range.x, range.y, split);
+        if(LEAFNODE(nodes[c1idx]) && LEAFNODE(nodes[c2idx]))
+            printf("IDX(%d) L_LN(%d), R_LN(%d), range=[%d,%d], sp(%d)\n",globalid, TOLEAFIDX(c1idx),TOLEAFIDX(c2idx), range.x, range.y, split);
+        else if(LEAFNODE(nodes[c1idx]))
+         printf("IDX(%d) L_LN(%d), R_IN(%d), range=[%d,%d], sp(%d)\n",globalid, TOLEAFIDX(c1idx), c2idx, range.x, range.y, split);
+        else if(LEAFNODE(nodes[c2idx]))
+            printf("IDX(%d) L_IN(%d), R_LN(%d), range=[%d,%d], sp(%d)\n",globalid, c1idx, TOLEAFIDX(c2idx), range.x, range.y, split);
+        else
+            printf("IDX(%d) L_IN(%d), R_IN(%d), range=[%d,%d], sp(%d)\n",globalid, c1idx, c2idx, range.x, range.y, split);
+         //printf("IDX(%d) L(%d), R(%d), range=[%d,%d], sp(%d)\n",globalid, c1idx, c2idx, range.x, range.y, split);
+       // }
+    }
+}
+
+__global__
+void RefitBounds(BoundingBox* bounds, int numprims, HNode* nodes, int* flags){
+    int globalid = blockIdx.x * blockDim.x + threadIdx.x;
+
+    // Start from leaf nodes
+    if (globalid < numprims)
+    {
+        // Get my leaf index
+        int idx = LEAFIDX(globalid);
+        int* flagidx;
+
+        do
+        {
+            // Move to parent node
+            __syncthreads();
+            idx = nodes[idx].parent;
+            flagidx = flags + idx;
+
+            //__threadfence();
+            // Check node's flag
+            if (atomicCAS(flagidx, 0, 1) == 1)
+            {
+                // If the flag was 1 the second child is ready and 
+                // this thread calculates bbox for the node
+
+                // Fetch kids
+                int lc = nodes[idx].left;
+                int rc = nodes[idx].right;
+
+                // Calculate bounds
+                BoundingBox b = bboxunion(bounds[lc], bounds[rc]);
+
+                // Write bounds
+                bounds[idx] = b;
+                printf("idx(%d) L=%d, R=%d bmin(%f,%f,%f),bmax(%f,%f,%f)\n",idx,lc,rc, b.bmin.x, b.bmin.y, b.bmin.z, b.bmax.x, b.bmax.y, b.bmax.z);
+            }
+            else
+            {
+                int lc = nodes[idx].left;
+                int rc = nodes[idx].right;
+                printf("Got here First idx(%d) L=%d, R=%d\n",idx,lc,rc);
+                // If the flag was 0 set it to 1 and bail out.
+                // The thread handling the second child will
+                // handle this node.
+                break;
+            }
+        }
+        while (idx != 0);
+    }
+
+}
 
 void BVH_d::computeMortonCodes(Vec3d& mMin, Vec3d& mMax){
     int threadsPerBlock = 256;
@@ -60,7 +268,7 @@ void BVH_d::computeMortonCodes(Vec3d& mMin, Vec3d& mMax){
 
 }
 void BVH_d::sortMortonCodes(){
-    thrust::device_ptr<unsigned int> dev_mortonCodes(mortonCodes);
+    thrust::device_ptr<int> dev_mortonCodes(mortonCodes);
     thrust::device_ptr<unsigned int> dev_object_ids(object_ids);
 
     // Let thrust do all the work for us
@@ -68,464 +276,28 @@ void BVH_d::sortMortonCodes(){
 }
 
 void BVH_d::setupLeafNodes(){
-    int threadsPerBlock = 256;
-    int blocksPerGrid =
-        (numTriangles + threadsPerBlock - 1) / threadsPerBlock;
-    setupLeafNodesKernel<<<blocksPerGrid, threadsPerBlock>>>(object_ids, BBoxs, leafNodes, numTriangles);
-
+    //Does nothing
 }
 void BVH_d::buildTree(){
     int threadsPerBlock = 256;
     int blocksPerGrid = (numTriangles + threadsPerBlock - 1) / threadsPerBlock;
     //int blocksPerGrid = (numTriangles - 1 + threadsPerBlock - 1) / threadsPerBlock;
-    setupLeafNodesKernel<<<blocksPerGrid, threadsPerBlock>>>(object_ids, BBoxs, leafNodes, numTriangles);
-    cudaDeviceSynchronize();
-    std::cout << "Post set up leaf nodes " << cudaGetErrorString(cudaGetLastError()) << std::endl;
 
-    generateHierarchyKernel<<<blocksPerGrid, threadsPerBlock>>>(mortonCodes, object_ids, internalNodes , leafNodes , numTriangles, BBoxs);
+    cudaDeviceSynchronize();
+    BuildHierarchy<<<blocksPerGrid, threadsPerBlock>>>(mortonCodes, BBoxs, object_ids, numTriangles, nodes, sortedBBoxs, flags);
     cudaDeviceSynchronize();
     std::cout << "Post Generate Hierarchy " << cudaGetErrorString(cudaGetLastError()) << std::endl;
 
-    computeBBoxesKernel<<<blocksPerGrid, threadsPerBlock>>>(leafNodes, internalNodes, numTriangles);
+    RefitBounds<<<blocksPerGrid, threadsPerBlock>>>(sortedBBoxs, numTriangles, nodes, flags);
     cudaDeviceSynchronize();
     std::cout << "Post compute Tree BBoxes " << cudaGetErrorString(cudaGetLastError()) << std::endl;
 
 }
 
-void bvh(Scene_h& scene_h)
-{
-    Scene_d scene_d;
-    scene_d = scene_h;
-
-    //launch the kernel
-    //hello<<<NUM_BLOCKS, BLOCK_WIDTH>>>();
-
-    //force the printf_DEBUG()s to flush
-    cudaDeviceSynchronize();
-
-    printf_DEBUG("That's all!\n");
-
-}
 
 //===========Begin KERNELS=============================
 //===========Begin KERNELS=============================
-// This kernel just computes the object id and morton code for the centroid of each bounding box
-__global__ 
-void computeMortonCodesKernel(unsigned int* mortonCodes, unsigned int* object_ids, 
-        BoundingBox* BBoxs, TriangleIndices* t_indices, Vec3d* vertices, int numTriangles, Vec3d mMin , Vec3d mMax){
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx >= numTriangles)
-        return;
-
-    object_ids[idx] = idx;
-    const TriangleIndices* ids = &t_indices[idx];
-
-    Vec3d a = vertices[ids->a.vertex_index];
-    Vec3d b = vertices[ids->b.vertex_index];
-    Vec3d c = vertices[ids->c.vertex_index];
-    Vec3d centroid = (a + b + c)/3.0;//= computeCentroid(BBoxs[idx]);
-    centroid.x = (centroid.x - mMin.x)/(mMax.x - mMin.x);
-    centroid.y = (centroid.y - mMin.y)/(mMax.y - mMin.y);
-    centroid.z = (centroid.z - mMin.z)/(mMax.z - mMin.z);
-    //map this centroid to unit cube
-    mortonCodes[idx] = morton3D(centroid.x, centroid.y, centroid.z);
-    printf_DEBUG("in computeMortonCodesKernel: idx->%d , mortonCode->%d, centroid(%0.6f,%0.6f,%0.6f)\n", idx, mortonCodes[idx], centroid.x, centroid.y, centroid.z);
-
-};
-
-__global__ 
-void setupLeafNodesKernel(unsigned int* sorted_object_ids, 
-        BoundingBox* BBoxs,
-        LeafNode* leafNodes, int numTriangles){
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-    if (idx >= numTriangles)
-        return;
-    leafNodes[idx].isLeaf = true;
-    leafNodes[idx].object_id = sorted_object_ids[idx];
-    leafNodes[idx].childA = nullptr;
-    leafNodes[idx].childB = nullptr;
-    leafNodes[idx].parent = nullptr;
-    //leafNodes[idx].node_id= idx;
-    leafNodes[idx].BBox= BBoxs[sorted_object_ids[idx]];
-}
-
-    __global__ 
-void computeBBoxesKernel( LeafNode* leafNodes, InternalNode* internalNodes, int numTriangles)
-{
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx >= numTriangles)
-        return;
-
-
-    printf_DEBUG("* LEAF(%d) BB bmin(%0.6f,%0.6f,%0.6f) bmax(%0.6f,%0.6f,%0.6f) \n",idx, leafNodes[idx].BBox.bmin.x, leafNodes[idx].BBox.bmin.y, leafNodes[idx].BBox.bmin.z, leafNodes[idx].BBox.bmax.x, leafNodes[idx].BBox.bmax.y, leafNodes[idx].BBox.bmax.z);
-    Node* Parent = leafNodes[idx].parent;
-    //while(Parent != nullptr)
-    do
-    {
-        if(atomicCAS(&(Parent->flag), 0 , 1))
-        //if(!atomicAdd(&(Parent->flag), 1))
-        {
-            //Parent->BBox.bEmpty = true;
-            Parent->BBox.merge(Parent->childA->BBox);
-            Parent->BBox.merge(Parent->childB->BBox);
-
-            int idA = (int)((Parent->childA->isLeaf) ? (LeafNode*)Parent->childA - leafNodes: (InternalNode*)Parent->childA - internalNodes ) ;
-            int idB = (int)((Parent->childB->isLeaf) ? (LeafNode*)Parent->childB - leafNodes: (InternalNode*)Parent->childB - internalNodes ) ;
-            if(Parent == &internalNodes[0])
-            printf_DEBUG1("**********parent child relationships**********\n"
-                    "* parent idx (%d) bmin(%0.6f,%0.6f,%0.6f) bmax(%0.6f,%0.6f,%0.6f) \n"
-                    "* childA(%d) is_leaf(%d) ob=%d bmin(%0.6f,%0.6f,%0.6f) bmax(%0.6f,%0.6f,%0.6f) \n"
-                    "* childB(%d) is_leaf(%d) ob=%d bmin(%0.6f,%0.6f,%0.6f) bmax(%0.6f,%0.6f,%0.6f) \n",
-                    (InternalNode*) Parent - internalNodes, Parent->BBox.bmin.x , Parent->BBox.bmin.y,Parent->BBox.bmin.z, Parent->BBox.bmax.x , Parent->BBox.bmax.y, Parent->BBox.bmax.z,
-                    idA, Parent->childA->isLeaf, Parent->childA->object_id, Parent->childA->BBox.bmin.x, Parent->childA->BBox.bmin.y , Parent->childA->BBox.bmin.z, Parent->childA->BBox.bmax.x, Parent->childA->BBox.bmax.y, Parent->childA->BBox.bmax.z ,
-                    idB, Parent->childB->isLeaf, Parent->childB->object_id, Parent->childB->BBox.bmin.x, Parent->childB->BBox.bmin.y , Parent->childB->BBox.bmin.z, Parent->childB->BBox.bmax.x, Parent->childB->BBox.bmax.y, Parent->childB->BBox.bmax.z );
-
-
-            Parent = Parent->parent;
-        }
-        else{
-            return; //If the first one then do nothing
-        }
-
-
-
-    } while (Parent != nullptr);
-
-
-
-}
-
 __device__
-int delta(const unsigned int* smc, int a, int b, int n){
-    bool tie = false;
-    bool outOfRange = (b < 0 || b > n -1);
-    int bb = (outOfRange) ? 0 : b;
-    unsigned int aCode = smc[a];
-    unsigned int bCode = smc[bb];
-    unsigned int exor = aCode ^ bCode;
-    tie = (exor == 0);
-    exor = tie ? a ^ bb : exor;
-    int count = __clz(exor);
-    if(tie) count += 32;
-    count = (outOfRange) ? -1 : count;
-    return count;
-}
-    __global__ 
-void generateHierarchyKernel(unsigned int* sortedMortonCodes,
-        unsigned int* sorted_object_ids, 
-        InternalNode* internalNodes,
-        LeafNode* leafNodes, int numTriangles, BoundingBox* BBoxs)
-{
-
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-    if (idx >= numTriangles - 1 ) //there are n - 1 internal nodes
-        return;
-
-    internalNodes[idx].isLeaf = false ;
-    internalNodes[idx].parent = nullptr ;
-    internalNodes[idx].BBox = BoundingBox();
-    internalNodes[idx].flag = 0;
-    //internalNodes[idx].node_id = idx;
-/*
-    int2 range = determineRange(sortedMortonCodes, numTriangles, idx);
-    int first = range.x;
-    int last = range.y;
-
-    //Determine where to split the range.
-
-    int split = findSplit(sortedMortonCodes, first, last);
-
-    // Select childA.
-
-    Node* childA;
-    if (split == first)
-    {
-        childA = &leafNodes[split];
-        //childA->BBox = BBoxs[split];
-    }
-    else
-        childA = &internalNodes[split];
-
-    // Select childB.
-
-    Node* childB;
-    if (split + 1 == last)
-    {
-        childB = &leafNodes[split + 1];
-        //childB->BBox = BBoxs[split + 1];
-    }
-    else
-        childB = &internalNodes[split + 1];
-
-    // Record parent-child relationships.
-
-    internalNodes[idx].childA = childA;
-    internalNodes[idx].childB = childB;
-    childA->parent = &internalNodes[idx];
-    childB->parent = &internalNodes[idx];
-*/
-    int d = ((delta(sortedMortonCodes, idx, idx +1, numTriangles) - delta(sortedMortonCodes, idx, idx-1, numTriangles)) < 0) ? -1 : 1;
-
-    int delMin = delta(sortedMortonCodes, idx, idx - d, numTriangles);
-    int lmax = 2;
-    while (delta(sortedMortonCodes, idx, idx + lmax*d, numTriangles) > delMin){
-        lmax = lmax * 2;
-    }
-    int l = 0;
-    for(int t = lmax/2; t >= 1; t /= 2){
-        if(delta(sortedMortonCodes, idx, idx + (l+t)*d, numTriangles) > delMin)
-            l += t;
-    }
-
-    int j = idx + l*d;
-    int deltaNode = delta(sortedMortonCodes, idx, j, numTriangles);
-    int s = 0;
-    float divFactor = 2.f;
-    for(int t = (int)ceil(l/divFactor);; divFactor*=2, t = (int)ceil(l/divFactor)){
-        if(delta(sortedMortonCodes, idx, idx + (s+t)*d, numTriangles) > deltaNode)
-            s += t;
-
-        if(t == 1)
-            break;
-    }
-    int split = idx + s*d + min(d,0);
-    
-    Node* childA;
-    if (min(idx,j) == split)
-    {
-        childA = &leafNodes[split];
-        //childA->BBox = BBoxs[split];
-    }
-    else
-        childA = &internalNodes[split];
-
-    // Select childB.
-
-    Node* childB;
-    if (max(idx, j) == split + 1)
-    {
-        childB = &leafNodes[split + 1];
-        //childB->BBox = BBoxs[split + 1];
-    }
-    else
-        childB = &internalNodes[split + 1];
-
-    // Record parent-child relationships.
-
-    internalNodes[idx].childA = childA;
-    internalNodes[idx].childB = childB;
-    childA->parent = &internalNodes[idx];
-    childB->parent = &internalNodes[idx];
-    
-}
-//===========END KERNELS=============================
-//===========END KERNELS=============================
-
-    __device__
-int findSplit( unsigned int* sortedMortonCodes,
-        int first,
-        int last)
-{
-    // Identical Morton codes => split the range in the middle.
-    unsigned int firstCode = sortedMortonCodes[first];
-    unsigned int lastCode = sortedMortonCodes[last];
-
-    if (firstCode == lastCode)
-        return (first + last) >> 1;
-
-    // Calculate the number of highest bits that are the same
-    // for all objects, using the count-leading-zeros intrinsic.
-
-    int commonPrefix = __clz(firstCode ^ lastCode);
-
-    // Use binary search to find where the next bit differs.
-    // Specifically, we are looking for the highest object that
-    // shares more than commonPrefix bits with the first one.
-
-    int split = first; // initial guess
-    int step = last - first;
-
-    do
-    {
-        step = (step + 1) >> 1; // exponential decrease //Ceiling
-        int newSplit = split + step; // proposed new position
-
-        if (newSplit < last)
-        {
-            unsigned int splitCode = sortedMortonCodes[newSplit];
-            int splitPrefix = __clz(firstCode ^ splitCode);
-            if (splitPrefix > commonPrefix)
-                split = newSplit; // accept proposal
-        }
-    }
-    while (step > 1);
-
-    return split;
-}
-
-__device__ 
-int mDelta(unsigned int* m, int i, int j, int n){
-    if (j < 0 || j > (n - 1))
-        return -1;
-    else
-        return __clz(m[i] ^ m[j]);
-}
-
-__device__
-int2 determineRange(unsigned int* sortedmortoncodes, int numtriangles, int idx){
-    int d = ((delta(sortedmortoncodes, idx, idx +1, numtriangles) - delta(sortedmortoncodes, idx, idx-1, numtriangles)) < 0) ? -1 : 1;
-
-    int delMin = delta(sortedmortoncodes, idx, idx - d, numtriangles);
-    int lmax = 2;
-    while (delta(sortedmortoncodes, idx, idx + lmax*d, numtriangles) > delMin){
-        lmax = lmax * 2;
-    }
-    int l = 0;
-    for(int t = lmax/2; t >= 1; t /= 2){
-        if(delta(sortedmortoncodes, idx, idx + (l+t)*d, numtriangles) > delMin)
-            l += t;
-    }
-    return make_int2(idx, idx + l*d);
-}
-    __device__
-int2 determineRange(unsigned int* sortedmortoncodes, int numtriangles, int idx, int DUMMY)
-{
-    //determine the range of keys covered by each internal node (as well as its children)
-    //direction is found by looking at the neighboring keys ki-1 , ki , ki+1
-    //the index is either the beginning of the range or the end of the range
-    int direction = 0;
-    int common_prefix_with_left = 0;
-    int common_prefix_with_right = 0;
-
-    common_prefix_with_right = __clz(sortedmortoncodes[idx] ^ sortedmortoncodes[idx + 1]);
-    if(idx <= 0){
-        common_prefix_with_left = -1;
-    }
-    else
-    {
-        common_prefix_with_left = __clz(sortedmortoncodes[idx] ^ sortedmortoncodes[idx - 1]);
-    }
-
-    //direction = ( (common_prefix_with_right - common_prefix_with_left) >= 0 ) ? 1 : -1;
-    direction = (common_prefix_with_right - common_prefix_with_left);
-    direction = (direction > 0) - (direction < 0); //Fast Sign
-    int min_prefix_range = 0;
-
-    if(idx - direction < 0 || idx - direction > numtriangles - 1)
-    {
-        min_prefix_range = -1;
-
-    }
-    else
-    {
-        min_prefix_range = __clz(sortedmortoncodes[idx] ^ sortedmortoncodes[idx - direction]); 
-    }
-
-    int lmax = 2;
-    int next_prefix;// = idx + lmax*direction;
-    do{
-        int next_key = idx + lmax*direction;
-        if ( next_key < 0 || next_key > (numtriangles -1))
-            next_prefix = -1;
-        else
-            next_prefix = __clz(sortedmortoncodes[idx] ^ sortedmortoncodes[next_key]);
-        lmax *= 2;
-    }while( next_prefix > min_prefix_range);
-/*
-    int next_key = idx + lmax*direction;
-    while((next_key >= 0) && (next_key <  numtriangles) && (__clz(sortedmortoncodes[idx] ^ sortedmortoncodes[next_key]) > min_prefix_range))
-    {
-        lmax *= 2;
-        next_key = idx + lmax*direction;
-    }
-*/
-    //find the other end using binary search
-    unsigned int l = 0;
-
-    // Use binary search to find where the next bit differs.
-    // Specifically, we are looking for the highest object that
-    // shares more than min prefix range bits with the first one.
-
-    int split = idx; // initial guess
-    int step = lmax;
-/*
-    do
-    {
-        step = (step + 1) >> 1; // exponential decrease //Ceiling
-        int newSplit = split + step; // proposed new position
-
-        if (newSplit < last)
-        {
-            unsigned int splitCode = sortedMortonCodes[newSplit];
-            int splitPrefix = __clz(firstCode ^ splitCode);
-            if (splitPrefix > min_prefix_range)
-                split = newSplit; // accept proposal
-        }
-    }
-    while (step > 1);
-    */
-    //do
-    while (lmax >= 1)
-    {
-        //lmax = (lmax + 1) >> 1; // exponential decrease
-        lmax = lmax >> 1; // exponential decrease // no ceiling
-        int new_val = idx + (l + lmax)*direction ; 
-
-        if(new_val >= 0 && new_val < numtriangles )
-        {
-            unsigned int code = sortedmortoncodes[new_val];
-            int prefix = __clz(sortedmortoncodes[idx] ^ code);
-            if (prefix > min_prefix_range)
-                l = l + lmax;
-        }
-    }
-    //while (lmax > 1);
-    
-    int j = idx + l*direction;
-
-    int left = 0 ; 
-    int right = 0;
-
-    if(idx < j){
-        left = idx;
-        right = j;
-    }
-    else
-    {
-        left = j;
-        right = idx;
-    }
-
-    //printf_DEBUG("idx : (%d) returning range (%d, %d) \n" , idx , left, right);
-
-    return make_int2(left,right);
-}
-    __device__
-unsigned int expandBits(unsigned int v)
-{
-    v = (v * 0x00010001u) & 0xff0000ffu;
-    v = (v * 0x00000101u) & 0x0f00f00fu;
-    v = (v * 0x00000011u) & 0xc30c30c3u;
-    v = (v * 0x00000005u) & 0x49249249u;
-    return v;
-}
-
-// calculates a 30-bit morton code for the
-// given 3d point located within the unit cube [0,1].
-    __device__
-unsigned int morton3D(double x, double y, double z)
-{
-    x = min(max(x * 1024.0f, 0.0f), 1023.0f);
-    y = min(max(y * 1024.0f, 0.0f), 1023.0f);
-    z = min(max(z * 1024.0f, 0.0f), 1023.0f);
-    unsigned int xx = expandBits((unsigned int)x);
-    unsigned int yy = expandBits((unsigned int)y);
-    unsigned int zz = expandBits((unsigned int)z);
-    return xx * 4 + yy * 2 + zz;
-}
-    __device__
 bool BVH_d::intersectTriangle(const ray& r, isect&  i, int object_id) const
 {
 
@@ -605,75 +377,24 @@ __device__
 void printBBox(const BoundingBox& b){
     printf_DEBUG1("[bmin(%f,%f,%f) bmax(%f,%f,%f)]", b.bmin.x, b.bmin.y, b.bmin.z,b.bmax.x, b.bmax.y, b.bmax.z);
 }
-__device__
-void printNode(const Node* node, int stackDepth){
-    printf_DEBUG1("   ");
-    for(int i = 0; i < stackDepth; i++)
-        printf_DEBUG1(" ");
-    if(node->isALeaf())
-        printf_DEBUG1("LN: ");
-    else
-        printf_DEBUG1("IN: ");
-    printf_DEBUG1("%d ob=%d ", stackDepth, node->object_id);
-    printBBox(node->BBox);
-    //printf("\n");
-}
+
+#define STARTIDX(x)     (((int)((x).left)))
+#define STACK_SIZE 64
+#define SHORT_STACK_SIZE 16
+
 __device__
 bool BVH_d::intersect(const ray& r, isect& i) const{
-#if DORECURSIVE
-    i.t = 1.0e32;
-    return intersect(r, i, getRoot());
-#elif DOSEQ
-    //printf("HERE\n");
-    bool haveOne = false;
-    isect* cur = new isect();
-    double tmin, tmax;
-    //printf("HERE\n");
-    printf_DEBUG("Num Triangles %d\n", numTriangles);
-    for(int j = 0; j < numTriangles; j++){
-        //if(!BBoxs[object_ids[j]].intersect(r, tmin, tmax))
-        //    continue;
-        //if(BBoxs[object_ids[j]].intersect(r, tmin, tmax)){
-        //if(BBoxs[object_ids[j]].intersect(r)){
-            printf_DEBUG1("%d ", object_ids[j]);
-            printBBox(BBoxs[object_ids[j]]);
-            printf_DEBUG1(" BX");
-            if(intersectTriangle(r, *cur, object_ids[j])){
-                printf_DEBUG1(" TX");
-                if(!haveOne || (cur->t < i.t)){
-                    printf_DEBUG1(" t=%f", cur->t);
-                    //printf("FOUND ONE t=%f\n",cur->t);
-                    i = *cur;
-                    haveOne = true;
-                }
-            }
-            printf_DEBUG1("\n");
-        //}else{
-        //    printf_DEBUG("[MISS] %d\n", object_ids[j]);
-
-        // }
-    }
-    if(!haveOne) i.t = 1000.0;
-    delete cur;
-    //printf("Closest is %d, %f\n", i.object_id, i.t);
-    return haveOne;
-#elif ATTEMPT
-    Node* stack[64];
-    int topIndex = 64;
-    stack[--topIndex] = getRoot();
+    int stack[STACK_SIZE];
+    int topIndex = STACK_SIZE;
+    stack[--topIndex] = 0; // Get root
     bool haveOne = false;
     isect cur;// = new isect();
-    printf_DEBUG1("HERE\n");
-    while (topIndex != 64){
-        Node* node = stack[topIndex++];
-        printNode(node, 64-topIndex);
-        if(node->BBox.intersect(r)) {
-            printf_DEBUG1(" BX");
-            if(node->isALeaf()){
-                if(intersectTriangle(r, cur, ((LeafNode*)node)->object_id)){
-                    printf_DEBUG1(" TX");
+    while (topIndex != STACK_SIZE){
+        int nodeIdx = stack[topIndex++];
+        if(sortedBBoxs[nodeIdx].intersect(r)) {
+            if (LEAFNODE(nodes[nodeIdx])) {
+                if(intersectTriangle(r, cur, nodes[nodeIdx].left)){ //Set this in the build
                     if((!haveOne || (cur.t < i.t))){
-                        printf_DEBUG1(" t=%f", cur.t);
                         //if((!haveOne || (cur->t < i.t)) && cur->t > RAY_EPSILON){
                         i = cur;
                         haveOne = true;
@@ -681,107 +402,17 @@ bool BVH_d::intersect(const ray& r, isect& i) const{
                 }
 
             } else{
-                    stack[--topIndex] = node->childB;
-                    stack[--topIndex] = node->childA;
-                    if(topIndex < 0){
-                        printf("Intersect stack not big enough!\n");
-                        return false;
-                    }
+                stack[--topIndex] = nodes[nodeIdx].right;
+                stack[--topIndex] = nodes[nodeIdx].left;
+                if(topIndex < 0){
+                    printf("Intersect stack not big enough!\n");
+                    return false;
+                }
             }
         }
 
-    printf_DEBUG1("\n");
-//    __syncthreads();
     }
-    //delete cur;
-    return haveOne;
-#else
-        bool haveOne = false;
-        double tMinA;
-        double tMaxA;
-        double tMinB;
-        double tMaxB;
-        Node* childL;
-        Node* childR;
-        bool overlapL;
-        bool overlapR;
-
-        // Allocate traversal stack from thread-local memory,
-        // and push NULL to indicate that there are no postponed nodes.
-        Node* stack[64];
-        //Node** stack = (Node**)malloc( 64*sizeof(Node*));
-        Node** stackPtr = stack;
-        *stackPtr = NULL; // push
-        stackPtr++;
-
-        // Traverse nodes starting from the root.
-        Node* node = getRoot();
-        if(!node->BBox.intersect(r, tMinA, tMaxA))
-            return false;
-        do
-        {
-            // Check each child node for overlap.
-            childL = node->childA;
-            childR = node->childB;
-            overlapL = childL->BBox.intersect(r, tMinA, tMaxA);
-            overlapR = childR->BBox.intersect(r, tMinB, tMaxB);
-
-            //                                printf("%d %d\n", overlapL, overlapR);
-
-            //                                printf("rp(%f, %f, %f), rd(%f,%f,%f) Node: %d\n", r.p.x,r.p.y,r.p.z,r.d.x,r.d.y,r.d.z, (InternalNode*)node - internalNodes);
-            // Query overlaps a leaf node => check intersect
-            if (overlapL && childL->isALeaf())
-            {
-                isect* cur = new isect();
-                if(intersectTriangle(r, *cur, ((LeafNode*)childL)->object_id)){
-
-                    if((!haveOne || (cur->t < i.t))){
-                        //if((!haveOne || (cur->t < i.t)) && cur->t > RAY_EPSILON){
-                        //                                            printf("LEFT FOUND ONE t=%f, N=(%f, %f, %f)f\n",cur->t, cur->N.x, cur->N.y, cur->N.z);
-                        i = *cur;
-                        haveOne = true;
-                    }
-                    }
-                    delete cur;
-                }
-
-                if (overlapR && childR->isALeaf())
-                {
-                    isect* cur = new isect();
-                    if(intersectTriangle(r, *cur, ((LeafNode*)childR)->object_id)){
-                        //if((!haveOne || (cur->t < i.t)) && cur->t > RAY_EPSILON){
-                        //                                            printf("RIGHT FOUND ONE t=%f, N=(%f, %f, %f)f\n",cur->t, cur->N.x, cur->N.y, cur->N.z);
-                        //printf("FOUND RIGHT\n");
-                        if(!haveOne || (cur->t < i.t)){
-                            //printf("FOUND ONE t=%f\n",cur->t);
-                            i = *cur;
-                            haveOne = true;
-                        }
-                    }
-                    delete cur;
-                    }
-
-                    // Query overlaps an internal node => traverse.
-                    bool traverseL = (overlapL && !childL->isALeaf());
-                    bool traverseR = (overlapR && !childR->isALeaf());
-
-                    if (!traverseL && !traverseR)
-                        node = *(--stackPtr); // pop
-                    else
-                    {
-                        node = (traverseL) ? childL : childR;
-                        if (traverseL && traverseR){
-                            *stackPtr = childR; // push
-                            stackPtr++;
-                        }
-
-                    }
-                }
-                while (node != NULL);
-                if(!haveOne) i.t = 1000.0;
-                //free(stack);
-                //printf("Closest is %d, %f\n", i.object_id, i.t);
-                return haveOne;
-#endif
-            }
+        //delete cur;
+        return haveOne;
+}
 
