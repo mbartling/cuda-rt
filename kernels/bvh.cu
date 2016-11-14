@@ -190,20 +190,18 @@ void BuildHierarchy(int* mortoncodes, BoundingBox* bounds, unsigned int* indices
         nodes[NODEIDX(globalid)].right = c2idx;
         //nodes[NODEIDX(globalid)].next = (range.y + 1 < numprims) ? range.y + 1 : -1;
         nodes[c1idx].parent = NODEIDX(globalid);
-        //nodes[c1idx].next = c2idx;
         nodes[c2idx].parent = NODEIDX(globalid);
-        //nodes[c2idx].next = nodes[NODEIDX(globalid)].next;
         //if(globalid == 0){
-        //printf("IDX(%d) L(%d), R(%d), range=[%d,%d], sp(%d)\n",globalid, TOLEAFIDX(c1idx),TOLEAFIDX(c2idx), range.x, range.y, split);
+        //printf_DEBUG2("IDX(%d) L(%d), R(%d), range=[%d,%d], sp(%d)\n",globalid, TOLEAFIDX(c1idx),TOLEAFIDX(c2idx), range.x, range.y, split);
         if(LEAFNODE(nodes[c1idx]) && LEAFNODE(nodes[c2idx]))
-            printf("IDX(%d) L_LN(%d), R_LN(%d), range=[%d,%d], sp(%d)\n",globalid, TOLEAFIDX(c1idx),TOLEAFIDX(c2idx), range.x, range.y, split);
+            printf_DEBUG2("IDX(%d) L_LN(%d), R_LN(%d), range=[%d,%d], sp(%d)\n",globalid, TOLEAFIDX(c1idx),TOLEAFIDX(c2idx), range.x, range.y, split);
         else if(LEAFNODE(nodes[c1idx]))
-         printf("IDX(%d) L_LN(%d), R_IN(%d), range=[%d,%d], sp(%d)\n",globalid, TOLEAFIDX(c1idx), c2idx, range.x, range.y, split);
+         printf_DEBUG2("IDX(%d) L_LN(%d), R_IN(%d), range=[%d,%d], sp(%d)\n",globalid, TOLEAFIDX(c1idx), c2idx, range.x, range.y, split);
         else if(LEAFNODE(nodes[c2idx]))
-            printf("IDX(%d) L_IN(%d), R_LN(%d), range=[%d,%d], sp(%d)\n",globalid, c1idx, TOLEAFIDX(c2idx), range.x, range.y, split);
+            printf_DEBUG2("IDX(%d) L_IN(%d), R_LN(%d), range=[%d,%d], sp(%d)\n",globalid, c1idx, TOLEAFIDX(c2idx), range.x, range.y, split);
         else
-            printf("IDX(%d) L_IN(%d), R_IN(%d), range=[%d,%d], sp(%d)\n",globalid, c1idx, c2idx, range.x, range.y, split);
-         //printf("IDX(%d) L(%d), R(%d), range=[%d,%d], sp(%d)\n",globalid, c1idx, c2idx, range.x, range.y, split);
+            printf_DEBUG2("IDX(%d) L_IN(%d), R_IN(%d), range=[%d,%d], sp(%d)\n",globalid, c1idx, c2idx, range.x, range.y, split);
+         //printf_DEBUG2("IDX(%d) L(%d), R(%d), range=[%d,%d], sp(%d)\n",globalid, c1idx, c2idx, range.x, range.y, split);
        // }
     }
 }
@@ -222,13 +220,12 @@ void RefitBounds(BoundingBox* bounds, int numprims, HNode* nodes, int* flags){
         do
         {
             // Move to parent node
-            __syncthreads();
             idx = nodes[idx].parent;
             flagidx = flags + idx;
 
             //__threadfence();
             // Check node's flag
-            if (atomicCAS(flagidx, 0, 1) == 1)
+            if (atomicCAS(flagidx, 0, 1))
             {
                 // If the flag was 1 the second child is ready and 
                 // this thread calculates bbox for the node
@@ -242,13 +239,13 @@ void RefitBounds(BoundingBox* bounds, int numprims, HNode* nodes, int* flags){
 
                 // Write bounds
                 bounds[idx] = b;
-                printf("idx(%d) L=%d, R=%d bmin(%f,%f,%f),bmax(%f,%f,%f)\n",idx,lc,rc, b.bmin.x, b.bmin.y, b.bmin.z, b.bmax.x, b.bmax.y, b.bmax.z);
+                printf_DEBUG2("idx(%d) L=%d, R=%d bmin(%f,%f,%f),bmax(%f,%f,%f)\n",idx,lc,rc, b.bmin.x, b.bmin.y, b.bmin.z, b.bmax.x, b.bmax.y, b.bmax.z);
             }
             else
             {
                 int lc = nodes[idx].left;
                 int rc = nodes[idx].right;
-                printf("Got here First idx(%d) L=%d, R=%d\n",idx,lc,rc);
+                printf_DEBUG2("Got here First idx(%d) L=%d, R=%d\n",idx,lc,rc);
                 // If the flag was 0 set it to 1 and bail out.
                 // The thread handling the second child will
                 // handle this node.
@@ -349,7 +346,7 @@ bool BVH_d::intersectTriangle(const ray& r, isect&  i, int object_id) const
     //if( t < RAY_EPSILON ) return false;
     if(fabsf(t) < RAY_EPSILON) return false; // Jaysus this sucked
     //i.bary = Vec3d(1 - (alpha + beta), alpha, beta);
-    //printf("t=%f\n", t);
+    //printf_DEBUG2("t=%f\n", t);
     //if( t < 0.0 ) return false;
     i.t = t;
 
@@ -405,7 +402,7 @@ bool BVH_d::intersect(const ray& r, isect& i) const{
                 stack[--topIndex] = nodes[nodeIdx].right;
                 stack[--topIndex] = nodes[nodeIdx].left;
                 if(topIndex < 0){
-                    printf("Intersect stack not big enough!\n");
+                    printf_DEBUG2("Intersect stack not big enough!\n");
                     return false;
                 }
             }

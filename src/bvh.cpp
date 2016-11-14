@@ -13,7 +13,7 @@ void BVH_d::setUp(Vec3d* mvertices, Vec3d* mnormals, BoundingBox* mBBoxs, Triang
     cudaMalloc(&object_ids, numTriangles*sizeof(unsigned int));
     
     cudaMalloc(&nodes, (2*numTriangles - 1)*sizeof(HNode));
-    cudaMalloc(&sortedBBoxs, (2*numTriangles - 1)*sizeof(HNode));
+    cudaMalloc(&sortedBBoxs, (2*numTriangles - 1)*sizeof(BoundingBox));
     cudaMalloc(&flags, (numTriangles - 1)*sizeof(int));
 
     // Set up for the BVH Build

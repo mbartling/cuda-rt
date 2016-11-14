@@ -16,3 +16,11 @@
 #define printf_DEBUG1(...) /*byte me*/
 #endif
 
+#define DEBUG_BVH2 0
+#if DEBUG_BVH2
+#include <stdio.h>
+#define printf_DEBUG2(...) printf( __VA_ARGS__ )
+#else
+#define printf_DEBUG2(...) /*byte me*/
+#endif
+
