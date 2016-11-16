@@ -1,7 +1,4 @@
-#pragma once
-#include "vec.h"
-#include "indexing.h"
-
+#include "mrand.cuh"
 __device__
 uint32_t rand_xorshift(uint32_t& rng_state)
 {

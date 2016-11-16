@@ -18,6 +18,7 @@ Camera::Camera(){
     //fstop = 22.0;
     fstop = 8.0;
     fov  = 30;
+    focalPoint = 10;
 }
 
 __host__ __device__

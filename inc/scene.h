@@ -97,6 +97,11 @@ class Scene_d{
             //printf("in SCENE INTERSECT\n");
             return bvh.intersect(r, i);
         }
+        __device__
+        bool intersectAny(const ray& r, isect& i){ //Find the closest point of intersection
+            //printf("in SCENE INTERSECT\n");
+            return bvh.intersectAny(r, i);
+        }
 
         __device__
         Light* getLight(){ return light; }

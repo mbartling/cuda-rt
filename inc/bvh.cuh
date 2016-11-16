@@ -64,6 +64,8 @@ class BVH_d {
 
         __device__
             bool intersect(const ray& r, isect& i) const;
+        __device__
+            bool intersectAny(const ray& r, isect& i) const;
 
 
 };

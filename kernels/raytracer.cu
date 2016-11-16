@@ -1,6 +1,6 @@
 #include "raytracer.h"
 #include "debug.h"
-#include "mrand.h"
+#include "mrand.cuh"
 #include "indexing.h"
 #include <stdio.h>
 #include <iostream>
@@ -124,8 +124,9 @@ void runRayTracerKernelRec(Scene_d* scene, int depth){
     //           ray r;
     //           scene->getCamera()->rayThrough(x, y, r);
     double invWidth = 1.0 / double(scene->imageWidth), invHeight = 1.0 / double(scene->imageHeight);
-    double fov = 35, aspectratio = double(scene->imageWidth) / double(scene->imageHeight);
-    double focalPoint = 10;
+    //double fov = 35, aspectratio = double(scene->imageWidth) / double(scene->imageHeight);
+    double fov = scene->getCamera()->getFOV(), aspectratio = double(scene->imageWidth) / double(scene->imageHeight);
+    double focalPoint = scene->getCamera()->getFocalPoint();
     double angle = tan(M_PI * 0.5 * fov / 180.0f);
     double xx = (2 * ((px + 0.5) * invWidth) - 1)*angle*aspectratio;
     double yy = (1 - 2 * ((py + 0.5) * invHeight)) * angle;

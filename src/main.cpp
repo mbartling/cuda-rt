@@ -67,6 +67,16 @@ struct Arg: public option::Arg
     if (msg) printError("Option '", option, "' requires a numeric argument\n");
     return option::ARG_ILLEGAL;
   }
+  static option::ArgStatus Float(const option::Option& option, bool msg)
+  {
+    char* endptr = 0;
+    if (option.arg != 0 && strtod(option.arg, &endptr)){};
+    if (endptr != option.arg && *endptr == 0)
+      return option::ARG_OK;
+
+    if (msg) printError("Option '", option, "' requires a float argument\n");
+    return option::ARG_ILLEGAL;
+  }
 };
 
 void split(const std::string &s, char delim, std::vector<std::string> &elems) {
@@ -78,7 +88,7 @@ void split(const std::string &s, char delim, std::vector<std::string> &elems) {
     }
 }
 
- enum  optionIndex { UNKNOWN, HELP, INPUT, NUMERIC, lORIENTATION, lPOSITION, lCOLOR, NONEMPTY, OUTPUT, WIDTH, HEIGHT};
+ enum  optionIndex { UNKNOWN, HELP, INPUT, NUMERIC, lORIENTATION, lPOSITION, lCOLOR, NONEMPTY, OUTPUT, WIDTH, HEIGHT, FSTOP, FOV, FOCALPOINT, lATTEN, lRADIUS};
 const option::Descriptor usage[] = {
   { UNKNOWN, 0,"", "",        Arg::Unknown, "USAGE: example_arg [options]\n\n"
                                             "Options:" },
@@ -92,9 +102,14 @@ const option::Descriptor usage[] = {
   { lORIENTATION, 0,"d","orientation", Arg::Required, "  -d <double,double,double>, \t--orientation=<double,double,double>  \tRequires 3 doubles as argument." },
   { lPOSITION, 0,"p","position", Arg::Required, "  -p <double,double,double>, \t--position=<double,double,double>  \tRequires 3 doubles as argument." },
   { lCOLOR, 0,"c","color", Arg::Required, "  -c <double,double,double>, \t--color=<double,double,double>  \tRequires 3 doubles as argument." },
+  { lATTEN, 0,"a","attenuation", Arg::Required, "  -a <double,double,double>, \t--attenuation=<double,double,double>  \tRequires 3 doubles as argument. a is constant falloff, b is Linear falloff, c is quadratic falloff" },
   { WIDTH, 0,"w","width", Arg::Numeric, "  -w <int>, \t--color=<int>  \tSet width" },
   { HEIGHT, 0,"h","height", Arg::Numeric, "  -h <int>, \t--color=<int>  \tSet height" },
   { OUTPUT, 0,"o","output", Arg::Required, "  -o <arg>, \t--output=<arg>  \tOutput file argument required." },
+  { FSTOP, 0,"f","fstop", Arg::Float, "  -f <float>, \t--fstop=<float>  \tSet fstop" },
+  { FOV, 0,"v","fov", Arg::Float, "  -v <float>, \t--fov=<float>  \tSet field of view" },
+  { FOCALPOINT, 0,"P","focalpoint", Arg::Float, "  -P <float>, \t--focalpoint=<float>  \tSet camera focal point" },
+  { lRADIUS, 0,"R","radius", Arg::Float, "  -R <float>, \t--radius=<float>  \tSet Light radius" },
 
   { UNKNOWN, 0,"", "",        Arg::None,
    "\nExamples:\n"
@@ -132,6 +147,9 @@ int main(int argc, char* argv[])
   int height=512, width=512;
   double arr[3];
   Vec3d color = Vec3d(1.f,1.f,1.f), position = Vec3d(1.f,1.f,1.f), orientation = Vec3d(1.f,1.f,1.f);
+  Camera camera;
+  Light_h hLight;
+  
   string::size_type sz;
 
   argc-=(argc>0); argv+=(argc>0); // skip program name argv[0] if present
@@ -192,7 +210,7 @@ int main(int argc, char* argv[])
                 arr[i] = stof(x[i], &sz);
                 fprintf(stdout, "options for orientation are %f \n", arr[i]);
             }
-            orientation = Vec3d(arr[0], arr[1], arr[2]);
+            hLight.orientation = Vec3d(arr[0], arr[1], arr[2]);
         }
         break;
       case lPOSITION:
@@ -202,7 +220,7 @@ int main(int argc, char* argv[])
             for(int i=0; i < x.size(); i++) {
                 arr[i] = stof(x[i], &sz);
             }
-            position = Vec3d(arr[0], arr[1], arr[2]);
+            hLight.position = Vec3d(arr[0], arr[1], arr[2]);
         }
         break;
       case lCOLOR:
@@ -213,7 +231,44 @@ int main(int argc, char* argv[])
                 arr[i] = stof(x[i], &sz);
                 //fprintf(stdout, "options for color are %f \n", arr[i]);
             }
-            color = Vec3d(arr[0], arr[1], arr[2]);
+            hLight.color = Vec3d(arr[0], arr[1], arr[2]);
+        }
+        break;
+      case lATTEN:
+        {
+	    fprintf(stdout, "--light attenuation with argument '%s'\n", opt.arg);
+            split(opt.arg, ',', x);
+            hLight.constantTerm = stof(x[0], &sz);
+            hLight.linearTerm = stof(x[1], &sz);
+            hLight.quadraticTerm = stof(x[2], &sz);
+        }
+        break;
+      case FOV:
+        {
+	    fprintf(stdout, "--field of view '%s'\n", opt.arg);
+           temp = opt.arg;
+           camera.setfov(stod(temp, &sz));
+        }
+        break;
+      case FSTOP:
+        {
+	    fprintf(stdout, "--fstop '%s'\n", opt.arg);
+           temp = opt.arg;
+           camera.setFstop(stod(temp, &sz));
+        }
+        break;
+      case FOCALPOINT:
+        {
+	    fprintf(stdout, "--focalpoint '%s'\n", opt.arg);
+           temp = opt.arg;
+           camera.setFocalPoint(stod(temp, &sz));
+        }
+        break;
+      case lRADIUS:
+        {
+	    fprintf(stdout, "--radius '%s'\n", opt.arg);
+           temp = opt.arg;
+           hLight.radius = stod(temp, &sz);
         }
         break;
       case NUMERIC:
@@ -262,11 +317,6 @@ int main(int argc, char* argv[])
   RayTracer rayTracer(height, width, 1);
   cout << "Loading Obj" << endl;
   rayTracer.LoadObj(sceneName, mtlFile);
-  Light_h hLight;
-  hLight.color = color;
-  hLight.position = position;
-  hLight.orientation = orientation;
-  Camera camera;
 
   rayTracer.setHostLight(hLight);
   rayTracer.setCamera(&camera); 

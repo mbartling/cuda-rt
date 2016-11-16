@@ -29,6 +29,8 @@ class Vec3d{
 
         __host__ __device__
         Vec3d& operator /= (double a){ x /= a; y /= a; z /= a; return *this; }
+        __host__ __device__
+        Vec3d& operator -= (double a){ x -= a; y -= a; z -= a; return *this; }
         
         __host__ __device__
         Vec3d operator - () const { return Vec3d(-x, -y, -z); }

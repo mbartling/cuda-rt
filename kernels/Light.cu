@@ -1,4 +1,5 @@
 #include "Light.h"
+#include "mrand.cuh"
 
 __device__
 Vec3d Light::shadowAttenuation(const ray& r, const Vec3d& pos){
@@ -13,7 +14,7 @@ Vec3d Light::shadowAttenuation(const ray& r, const Vec3d& pos){
         // }
 
         isect* i = new isect();
-    if(scene->intersect(R, *i)) { //We are potentially occluded
+    if(scene->intersectAny(R, *i)) { //We are potentially occluded
         if (i->t < norm(position - pos)){
             const Material* m = &scene->materials[scene->material_ids[i->object_id]]; //i->material;	  
             if(i->t < RAY_EPSILON){ delete i; return Vec3d(1,1,1);}
@@ -25,6 +26,7 @@ Vec3d Light::shadowAttenuation(const ray& r, const Vec3d& pos){
             }
             else{
                 delete i;
+                //printf("HERHE");
                 return Vec3d(0,0,0);
             }
         }
@@ -68,7 +70,9 @@ double Light::distanceAttenuation(const Vec3d& p){
 __device__
 Vec3d Light::getDirection(const Vec3d& p){
 #if POSITIONAL_LIGHT
-    Vec3d ret = position - p;
+    Vec3d offset = randVec3d(scene->seeds) * radius;
+    offset -= 0.5;
+    Vec3d ret = position + offset - p;
     normalize(ret);
     return ret;
 #else //DIRECTIONAL_LIGHT

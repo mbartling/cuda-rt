@@ -26,6 +26,13 @@ class Camera
         void setFstop(double fs) { fstop = fs; }
 
         __host__ __device__
+        void setfov(double fov1) { fov = fov1; }
+        
+        __host__ __device__
+        void setFocalPoint(double focalPoint1) { focalPoint = focalPoint1; }
+        __host__ __device__
+        double getFocalPoint() const { return focalPoint; }
+        __host__ __device__
         const Vec3d& getEye() const         { return eye; }
         __host__ __device__
         const Vec3d& getLook() const        { return look; }
@@ -35,6 +42,8 @@ class Camera
         const Vec3d& getV() const           { return v; }
         __host__ __device__
         double getAperature() const           { return 1/fstop; }
+        __host__ __device__
+        double getFOV() const           { return fov; }
     private:
         Mat3d m;                     // rotation matrix
         double normalizedHeight;    // dimensions of image place at unit dist from eye
@@ -49,6 +58,7 @@ class Camera
 
         double fstop;
         double fov;
+        double focalPoint;
 };
 
 #endif

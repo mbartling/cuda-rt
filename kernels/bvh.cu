@@ -413,3 +413,37 @@ bool BVH_d::intersect(const ray& r, isect& i) const{
         return haveOne;
 }
 
+__device__
+bool BVH_d::intersectAny(const ray& r, isect& i) const{
+    int stack[STACK_SIZE];
+    int topIndex = STACK_SIZE;
+    stack[--topIndex] = 0; // Get root
+    bool haveOne = false;
+    isect cur;// = new isect();
+    while (topIndex != STACK_SIZE){
+        int nodeIdx = stack[topIndex++];
+        if(sortedBBoxs[nodeIdx].intersect(r)) {
+            if (LEAFNODE(nodes[nodeIdx])) {
+                if(intersectTriangle(r, cur, nodes[nodeIdx].left)){ //Set this in the build
+                    if((!haveOne || (cur.t < i.t))){
+                        //if((!haveOne || (cur->t < i.t)) && cur->t > RAY_EPSILON){
+                        i = cur;
+                        haveOne = true;
+                        return true;
+                    }
+                }
+
+            } else{
+                stack[--topIndex] = nodes[nodeIdx].right;
+                stack[--topIndex] = nodes[nodeIdx].left;
+                if(topIndex < 0){
+                    printf_DEBUG2("Intersect stack not big enough!\n");
+                    return false;
+                }
+            }
+        }
+
+    }
+        //delete cur;
+        return haveOne;
+}

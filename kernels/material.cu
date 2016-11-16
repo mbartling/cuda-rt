@@ -15,8 +15,9 @@ Vec3d Material::shade(Scene_d* scene, const ray& r, const isect& i) const
 
                Light* pLight  = scene->getLight();
                Vec3d lightDir = pLight->getDirection(r.at(i.t));
+               ray toLightR(r.at(i.t), lightDir);
                //ray toLightR(r.at(i.t) + RAY_EPSILON*lightDir, lightDir);
-               ray toLightR(r.at(i.t) + i.N*RAY_EPSILON, lightDir);
+               //ray toLightR(r.at(i.t) + i.N*RAY_EPSILON, lightDir);
 
 
                Vec3d atten    = pLight->distanceAttenuation(r.at(i.t)) * pLight->shadowAttenuation(toLightR, r.at(i.t));
