@@ -1,0 +1,168 @@
+==7218== NVPROF is profiling process 7218, command: ./cuda_bvh -i ../objs/funyz/ullyr.obj -o ullyr.bmp -f 16.0 -v 35 -P 15.0 -a 0.0001,0.0001,0.0001 -p -4.0,2.0,-4.0 -w 1024 -h 1024 -R 0.5
+Argument #0 is --required with argument '../objs/funyz/ullyr.obj'
+mtlFile = ../objs/funyz/
+Argument #1 is --output with argument 'ullyr.bmp'
+Argument #2 is --fstop '16.0'
+Argument #3 is --field of view '35'
+Argument #4 is --focalpoint '15.0'
+Argument #5 is --light attenuation with argument '0.0001,0.0001,0.0001'
+Argument #6 is --light position with argument '-4.0,2.0,-4.0'
+Argument #7 is --width with argument '1024'
+Argument #8 is --height with argument '1024'
+Argument #9 is --radius '0.5'
+Building Ray Tracer
+Loading Obj
+Number of faces in mesh 2
+Number of faces in mesh 10052
+Number of faces in mesh 15862
+Number of faces in mesh 3364
+Number of faces in mesh 576
+Number of faces in mesh 200
+Number of faces in mesh 2048
+Number of faces in mesh 2048
+Number of faces in mesh 4672
+Number of faces in mesh 2048
+Number of faces in mesh 5888
+Number of faces in mesh 5888
+Number of faces in mesh 5888
+Number of faces in mesh 4096
+Number of faces in mesh 2304
+Number of faces in mesh 3364
+Number of faces in mesh 15862
+Number of faces in mesh 10052
+Number of faces in mesh 29952
+Number of faces in mesh 11392
+Number of faces in mesh 89472
+Number of faces in mesh 1152
+Number of faces in mesh 600
+Number of faces in mesh 2048
+Number of faces in mesh 2048
+Number of faces in mesh 620
+Number of faces in mesh 13504
+Number of faces in mesh 5440
+Number of faces in mesh 6848
+Number of faces in mesh 4992
+Number of faces in mesh 23808
+Number of faces in mesh 23808
+Number of faces in mesh 23808
+Number of faces in mesh 23808
+Number of faces in mesh 992
+Number of faces in mesh 3712
+Number of faces in mesh 4480
+Number of faces in mesh 4480
+Number of faces in mesh 82304
+Number of faces in mesh 4480
+Number of faces in mesh 4480
+Number of faces in mesh 4480
+Number of faces in mesh 4224
+Number of faces in mesh 680
+Number of faces in mesh 18560
+Number of faces in mesh 2048
+Number of faces in mesh 2048
+Number of faces in mesh 22272
+Number of faces in mesh 5888
+Number of faces in mesh 5888
+Number of faces in mesh 5888
+Number of faces in mesh 5888
+Number of faces in mesh 5888
+Number of faces in mesh 56
+Number of faces in mesh 56
+Number of faces in mesh 7232
+Number of faces in mesh 152
+Number of faces in mesh 680
+Number of faces in mesh 212
+Number of faces in mesh 212
+Number of faces in mesh 448
+Number of faces in mesh 98560
+Number of faces in mesh 88
+Number of faces in mesh 2976
+Number of faces in mesh 5440
+Number of faces in mesh 1020
+Number of faces in mesh 1536
+Number of faces in mesh 1536
+Number of faces in mesh 8960
+Number of faces in mesh 179040
+Setting up Scene
+Copying to Device
+num of vertices : 431208 
+num of triangles : 854398 
+num of materials : 33 
+Device imageWidth=1024, imageHeight=1024
+HERE
+1199190
+Done Copying basic objects to device
+Post Scene BBoxes no error
+Post Find Min Max no error
+Post Compute Morton Codes no error
+Post Sort Morton Codes no error
+Post Generate Hierarchy no error
+Post compute Tree BBoxes no error
+Post Build Tree no error
+Post BVH Setup no error
+found min(-16.811195, -8.255847 , -74.473389)found max(18.589043, 7.316412 , -12.907854)Running
+Start of Ray Trace run no error
+Before Light Kernel no error
+Post Init Light no error
+
+Launching Ray tracer kernel
+Post Set Stack Limit no error
+Post Get Stack Limit no error
+Post Ray Trace no error
+
+Done rendering Scene
+Fetching Image
+imageSize 1048576
+Writing Image
+==7218== Profiling application: ./cuda_bvh -i ../objs/funyz/ullyr.obj -o ullyr.bmp -f 16.0 -v 35 -P 15.0 -a 0.0001,0.0001,0.0001 -p -4.0,2.0,-4.0 -w 1024 -h 1024 -R 0.5
+==7218== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 99.84%  22.5795s         1  22.5795s  22.5795s  22.5795s  runRayTracerKernelRec(Scene_d*, int)
+  0.06%  14.158ms         7  2.0226ms     992ns  8.1970ms  [CUDA memcpy HtoD]
+  0.03%  5.9778ms         3  1.9926ms  2.5280us  5.9727ms  [CUDA memcpy DtoH]
+  0.02%  5.5461ms         1  5.5461ms  5.5461ms  5.5461ms  BuildHierarchy(int*, BoundingBox*, unsigned int*, int, HNode*, BoundingBox*, int*)
+  0.02%  4.9887ms         1  4.9887ms  4.9887ms  4.9887ms  RefitBounds(BoundingBox*, int, HNode*, int*)
+  0.01%  1.7597ms         1  1.7597ms  1.7597ms  1.7597ms  computeBoundingBoxes_kernel(int, Vec3d*, TriangleIndices*, BoundingBox*)
+  0.00%  822.95us         1  822.95us  822.95us  822.95us  computeMortonCodesKernel(int*, unsigned int*, BoundingBox*, TriangleIndices*, Vec3d*, int, Vec3d, Vec3d)
+  0.00%  716.07us         4  179.02us  172.29us  190.34us  void thrust::system::cuda::detail::cub_::DeviceRadixSortDownsweepKernel<thrust::system::cuda::detail::cub_::DeviceRadixSortDispatch<bool=0, int, unsigned int, int>::PtxDownsweepPolicy, bool=0, int, unsigned int, int>(unsigned int*, unsigned int, int*, int, thrust::system::cuda::detail::cub_::DeviceRadixSortDispatch<bool=0, int, unsigned int, int>::PtxDownsweepPolicy*, int*, int, int, bool, bool, thrust::system::cuda::detail::cub_::GridEvenShare<int*>)
+  0.00%  574.12us         1  574.12us  574.12us  574.12us  _ZN6thrust6system4cuda6detail5bulk_6detail15launch_by_valueILj0ENS4_9cuda_taskINS3_14parallel_groupINS3_16concurrent_groupINS3_5agentILm1EEELm0EEELm0EEENS4_7closureINS2_13reduce_detail17reduce_partitionsENS_5tupleINS4_6cursorILj1EEENS_18transform_iteratorI11minAccessorNS_10device_ptrI11BoundingBoxEE5Vec3dNS_11use_defaultEEENS2_21uniform_decompositionIlEENS_6detail15normal_iteratorINS_7pointerISO_NS2_3tagESP_SP_EEEESO_10minFunctorNS_9null_typeES10_S10_S10_EEEEEEEEvT0_
+  0.00%  569.16us         1  569.16us  569.16us  569.16us  _ZN6thrust6system4cuda6detail5bulk_6detail15launch_by_valueILj0ENS4_9cuda_taskINS3_14parallel_groupINS3_16concurrent_groupINS3_5agentILm1EEELm0EEELm0EEENS4_7closureINS2_13reduce_detail17reduce_partitionsENS_5tupleINS4_6cursorILj1EEENS_18transform_iteratorI11maxAccessorNS_10device_ptrI11BoundingBoxEE5Vec3dNS_11use_defaultEEENS2_21uniform_decompositionIlEENS_6detail15normal_iteratorINS_7pointerISO_NS2_3tagESP_SP_EEEESO_10maxFunctorNS_9null_typeES10_S10_S10_EEEEEEEEvT0_
+  0.00%  528.29us         3  176.10us  175.71us  176.51us  void thrust::system::cuda::detail::cub_::DeviceRadixSortDownsweepKernel<thrust::system::cuda::detail::cub_::DeviceRadixSortDispatch<bool=0, int, unsigned int, int>::PtxAltDownsweepPolicy, bool=0, int, unsigned int, int>(unsigned int*, unsigned int, int*, int, thrust::system::cuda::detail::cub_::DeviceRadixSortDispatch<bool=0, int, unsigned int, int>::PtxAltDownsweepPolicy*, int*, int, int, bool, bool, thrust::system::cuda::detail::cub_::GridEvenShare<int*>)
+  0.00%  394.47us         1  394.47us  394.47us  394.47us  AverageSuperSamplingKernel(Vec3d*, Vec3d*, int, int, int)
+  0.00%  200.00us         4  50.000us  49.473us  50.593us  void thrust::system::cuda::detail::cub_::DeviceRadixSortUpsweepKernel<thrust::system::cuda::detail::cub_::DeviceRadixSortDispatch<bool=0, int, unsigned int, int>::PtxUpsweepPolicy, bool=0, int, int>(unsigned int*, int*, unsigned int*, int, int, bool, thrust::system::cuda::detail::cub_::GridEvenShare<unsigned int*>)
+  0.00%  143.59us         7  20.512us  16.544us  23.457us  void thrust::system::cuda::detail::cub_::RadixSortScanBinsKernel<thrust::system::cuda::detail::cub_::DeviceRadixSortDispatch<bool=0, int, unsigned int, int>::PtxScanPolicy, int>(int*, int)
+  0.00%  130.14us         3  43.381us  42.752us  43.936us  void thrust::system::cuda::detail::cub_::DeviceRadixSortUpsweepKernel<thrust::system::cuda::detail::cub_::DeviceRadixSortDispatch<bool=0, int, unsigned int, int>::PtxAltUpsweepPolicy, bool=0, int, int>(unsigned int*, int*, unsigned int*, int, int, bool, thrust::system::cuda::detail::cub_::GridEvenShare<unsigned int*>)
+  0.00%  13.600us         1  13.600us  13.600us  13.600us  void thrust::system::cuda::detail::bulk_::detail::launch_by_value<unsigned int=0, thrust::system::cuda::detail::bulk_::detail::cuda_task<thrust::system::cuda::detail::bulk_::parallel_group<thrust::system::cuda::detail::bulk_::concurrent_group<thrust::system::cuda::detail::bulk_::agent<unsigned long=1>, unsigned long=0>, unsigned long=0>, thrust::system::cuda::detail::bulk_::detail::closure<thrust::system::cuda::detail::reduce_detail::reduce_partitions, thrust::tuple<thrust::system::cuda::detail::bulk_::detail::cursor<unsigned int=1>, thrust::detail::normal_iterator<thrust::pointer<Vec3d, thrust::system::cuda::detail::tag, thrust::use_default, thrust::use_default>>, thrust::detail::normal_iterator<thrust::pointer<Vec3d, thrust::system::cuda::detail::tag, thrust::use_default, thrust::use_default>>, thrust::detail::normal_iterator<thrust::pointer<Vec3d, thrust::system::cuda::detail::tag, thrust::use_default, thrust::use_default>>, minFunctor, thrust::null_type, thrust::null_type, thrust::null_type, thrust::null_type, thrust::null_type>>>>(unsigned long=1)
+  0.00%  13.056us         1  13.056us  13.056us  13.056us  void thrust::system::cuda::detail::bulk_::detail::launch_by_value<unsigned int=0, thrust::system::cuda::detail::bulk_::detail::cuda_task<thrust::system::cuda::detail::bulk_::parallel_group<thrust::system::cuda::detail::bulk_::concurrent_group<thrust::system::cuda::detail::bulk_::agent<unsigned long=1>, unsigned long=0>, unsigned long=0>, thrust::system::cuda::detail::bulk_::detail::closure<thrust::system::cuda::detail::reduce_detail::reduce_partitions, thrust::tuple<thrust::system::cuda::detail::bulk_::detail::cursor<unsigned int=1>, thrust::detail::normal_iterator<thrust::pointer<Vec3d, thrust::system::cuda::detail::tag, thrust::use_default, thrust::use_default>>, thrust::detail::normal_iterator<thrust::pointer<Vec3d, thrust::system::cuda::detail::tag, thrust::use_default, thrust::use_default>>, thrust::detail::normal_iterator<thrust::pointer<Vec3d, thrust::system::cuda::detail::tag, thrust::use_default, thrust::use_default>>, maxFunctor, thrust::null_type, thrust::null_type, thrust::null_type, thrust::null_type, thrust::null_type>>>>(unsigned long=1)
+  0.00%  9.4080us         2  4.7040us  4.5120us  4.8960us  [CUDA memcpy DtoD]
+  0.00%  5.5040us         2  2.7520us  2.6560us  2.8480us  void thrust::system::cuda::detail::bulk_::detail::launch_by_value<unsigned int=0, thrust::system::cuda::detail::bulk_::detail::cuda_task<thrust::system::cuda::detail::bulk_::parallel_group<thrust::system::cuda::detail::bulk_::concurrent_group<thrust::system::cuda::detail::bulk_::agent<unsigned long=1>, unsigned long=0>, unsigned long=0>, thrust::system::cuda::detail::bulk_::detail::closure<thrust::system::cuda::detail::for_each_n_detail::for_each_kernel, thrust::tuple<thrust::system::cuda::detail::bulk_::detail::cursor<unsigned int=0>, thrust::pointer<Vec3d, thrust::system::cuda::detail::tag, thrust::use_default, thrust::use_default>, thrust::detail::wrapped_function<thrust::detail::allocator_traits_detail::gozer, void>, unsigned int, thrust::null_type, thrust::null_type, thrust::null_type, thrust::null_type, thrust::null_type, thrust::null_type>>>>(unsigned long=1)
+  0.00%  3.1360us         1  3.1360us  3.1360us  3.1360us  initLight(Scene_d*, Light_h, Light*)
+
+==7218== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 99.01%  22.5931s        14  1.61379s  3.1690us  22.5795s  cudaDeviceSynchronize
+  0.86%  196.59ms         1  196.59ms  196.59ms  196.59ms  cudaDeviceSetLimit
+  0.10%  21.717ms         8  2.7147ms  12.757us  8.5173ms  cudaMemcpy
+  0.01%  3.0013ms        18  166.74us  7.9290us  1.6590ms  cudaFree
+  0.01%  2.2541ms        20  112.71us  8.8500us  283.64us  cudaMalloc
+  0.00%  1.1128ms         4  278.19us  15.001us  560.43us  cudaMemcpyAsync
+  0.00%  722.11us        34  21.238us  8.4170us  268.31us  cudaLaunch
+  0.00%  307.87us         1  307.87us  307.87us  307.87us  cudaDeviceReset
+  0.00%  264.33us        83  3.1840us     135ns  120.29us  cuDeviceGetAttribute
+  0.00%  88.322us        32  2.7600us  2.0840us  7.3810us  cudaFuncGetAttributes
+  0.00%  60.450us       179     337ns     259ns  5.1940us  cudaSetupArgument
+  0.00%  34.013us         1  34.013us  34.013us  34.013us  cuDeviceTotalMem
+  0.00%  27.198us         1  27.198us  27.198us  27.198us  cuDeviceGetName
+  0.00%  15.818us        34     465ns     253ns  2.4330us  cudaConfigureCall
+  0.00%  12.504us        25     500ns     195ns  2.2280us  cudaGetLastError
+  0.00%  11.996us         6  1.9990us  1.3320us  4.0320us  cudaEventCreateWithFlags
+  0.00%  11.894us        14     849ns     767ns  1.4400us  cudaDeviceSetSharedMemConfig
+  0.00%  11.633us        20     581ns     307ns  2.1060us  cudaGetDevice
+  0.00%  8.4570us         6  1.4090us     896ns  3.3450us  cudaEventDestroy
+  0.00%  7.6850us         6  1.2800us     984ns  2.3500us  cudaEventRecord
+  0.00%  7.4170us        17     436ns     292ns  1.2770us  cudaDeviceGetAttribute
+  0.00%  5.6450us        21     268ns     239ns     437ns  cudaPeekAtLastError
+  0.00%  3.0330us         2  1.5160us     665ns  2.3680us  cudaDeviceGetSharedMemConfig
+  0.00%  2.7110us         2  1.3550us     553ns  2.1580us  cuDeviceGetCount
+  0.00%  2.5120us        14     179ns     129ns     374ns  cudaGetErrorString
+  0.00%  2.4300us         1  2.4300us  2.4300us  2.4300us  cudaDeviceGetLimit
+  0.00%     560ns         2     280ns     211ns     349ns  cuDeviceGet

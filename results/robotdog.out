@@ -1,0 +1,720 @@
+==6308== NVPROF is profiling process 6308, command: ./cuda_bvh -i ../objs/funyz/robot-dog.obj -o robotdog.bmp -f 2.8 -v 35 -P 11.0 -a 0.01,0.01,0.01 -p -4.0,2.0,-4.0 -w 1024 -h 1024 -R 0.3
+Argument #0 is --required with argument '../objs/funyz/robot-dog.obj'
+mtlFile = ../objs/funyz/
+Argument #1 is --output with argument 'robotdog.bmp'
+Argument #2 is --fstop '2.8'
+Argument #3 is --field of view '35'
+Argument #4 is --focalpoint '11.0'
+Argument #5 is --light attenuation with argument '0.01,0.01,0.01'
+Argument #6 is --light position with argument '-4.0,2.0,-4.0'
+Argument #7 is --width with argument '1024'
+Argument #8 is --height with argument '1024'
+Argument #9 is --radius '0.3'
+Building Ray Tracer
+Loading Obj
+Number of faces in mesh 1008
+Number of faces in mesh 2620
+Number of faces in mesh 74
+Number of faces in mesh 128
+Number of faces in mesh 806
+Number of faces in mesh 180
+Number of faces in mesh 264
+Number of faces in mesh 96
+Number of faces in mesh 126
+Number of faces in mesh 208
+Number of faces in mesh 128
+Number of faces in mesh 144
+Number of faces in mesh 700
+Number of faces in mesh 128
+Number of faces in mesh 12
+Number of faces in mesh 416
+Number of faces in mesh 208
+Number of faces in mesh 104
+Number of faces in mesh 130
+Number of faces in mesh 12
+Number of faces in mesh 208
+Number of faces in mesh 32
+Number of faces in mesh 20
+Number of faces in mesh 3072
+Number of faces in mesh 168
+Number of faces in mesh 92
+Number of faces in mesh 976
+Number of faces in mesh 390
+Number of faces in mesh 88
+Number of faces in mesh 92
+Number of faces in mesh 744
+Number of faces in mesh 574
+Number of faces in mesh 1040
+Number of faces in mesh 148
+Number of faces in mesh 92
+Number of faces in mesh 148
+Number of faces in mesh 92
+Number of faces in mesh 404
+Number of faces in mesh 2964
+Number of faces in mesh 124
+Number of faces in mesh 92
+Number of faces in mesh 472
+Number of faces in mesh 412
+Number of faces in mesh 20
+Number of faces in mesh 2608
+Number of faces in mesh 2104
+Number of faces in mesh 1044
+Number of faces in mesh 128
+Number of faces in mesh 316
+Number of faces in mesh 792
+Number of faces in mesh 208
+Number of faces in mesh 92
+Number of faces in mesh 92
+Number of faces in mesh 1352
+Number of faces in mesh 92
+Number of faces in mesh 72
+Number of faces in mesh 84
+Number of faces in mesh 1672
+Number of faces in mesh 14116
+Number of faces in mesh 830
+Number of faces in mesh 1008
+Number of faces in mesh 118
+Number of faces in mesh 336
+Number of faces in mesh 390
+Number of faces in mesh 544
+Number of faces in mesh 1420
+Number of faces in mesh 208
+Number of faces in mesh 96
+Number of faces in mesh 12
+Number of faces in mesh 2620
+Number of faces in mesh 88
+Number of faces in mesh 1672
+Number of faces in mesh 574
+Number of faces in mesh 92
+Number of faces in mesh 4224
+Number of faces in mesh 2824
+Number of faces in mesh 264
+Number of faces in mesh 610
+Number of faces in mesh 384
+Number of faces in mesh 308
+Number of faces in mesh 824
+Number of faces in mesh 92
+Number of faces in mesh 32
+Number of faces in mesh 1116
+Number of faces in mesh 1378
+Number of faces in mesh 20
+Number of faces in mesh 200
+Number of faces in mesh 1000
+Number of faces in mesh 1016
+Number of faces in mesh 12
+Number of faces in mesh 128
+Number of faces in mesh 208
+Number of faces in mesh 1360
+Number of faces in mesh 92
+Number of faces in mesh 308
+Number of faces in mesh 286
+Number of faces in mesh 16
+Number of faces in mesh 208
+Number of faces in mesh 180
+Number of faces in mesh 824
+Number of faces in mesh 320
+Number of faces in mesh 252
+Number of faces in mesh 1240
+Number of faces in mesh 1000
+Number of faces in mesh 32
+Number of faces in mesh 896
+Number of faces in mesh 12
+Number of faces in mesh 20
+Number of faces in mesh 92
+Number of faces in mesh 768
+Number of faces in mesh 126
+Number of faces in mesh 544
+Number of faces in mesh 316
+Number of faces in mesh 208
+Number of faces in mesh 188
+Number of faces in mesh 92
+Number of faces in mesh 60
+Number of faces in mesh 1016
+Number of faces in mesh 198
+Number of faces in mesh 148
+Number of faces in mesh 118
+Number of faces in mesh 92
+Number of faces in mesh 352
+Number of faces in mesh 300
+Number of faces in mesh 92
+Number of faces in mesh 856
+Number of faces in mesh 4608
+Number of faces in mesh 544
+Number of faces in mesh 2
+Number of faces in mesh 118
+Number of faces in mesh 4608
+Number of faces in mesh 148
+Number of faces in mesh 24
+Number of faces in mesh 92
+Number of faces in mesh 92
+Number of faces in mesh 720
+Number of faces in mesh 1396
+Number of faces in mesh 92
+Number of faces in mesh 806
+Number of faces in mesh 296
+Number of faces in mesh 188
+Number of faces in mesh 544
+Number of faces in mesh 12
+Number of faces in mesh 316
+Number of faces in mesh 60
+Number of faces in mesh 12
+Number of faces in mesh 20
+Number of faces in mesh 700
+Number of faces in mesh 1372
+Number of faces in mesh 118
+Number of faces in mesh 1552
+Number of faces in mesh 272
+Number of faces in mesh 12
+Number of faces in mesh 1240
+Number of faces in mesh 32
+Number of faces in mesh 1470
+Number of faces in mesh 16
+Number of faces in mesh 1544
+Number of faces in mesh 544
+Number of faces in mesh 1372
+Number of faces in mesh 92
+Number of faces in mesh 88
+Number of faces in mesh 32
+Number of faces in mesh 1364
+Number of faces in mesh 92
+Number of faces in mesh 1008
+Number of faces in mesh 92
+Number of faces in mesh 180
+Number of faces in mesh 856
+Number of faces in mesh 150
+Number of faces in mesh 208
+Number of faces in mesh 252
+Number of faces in mesh 12
+Number of faces in mesh 88
+Number of faces in mesh 2104
+Number of faces in mesh 264
+Number of faces in mesh 7466
+Number of faces in mesh 12
+Number of faces in mesh 92
+Number of faces in mesh 1896
+Number of faces in mesh 1116
+Number of faces in mesh 32
+Number of faces in mesh 208
+Number of faces in mesh 16
+Number of faces in mesh 92
+Number of faces in mesh 210
+Number of faces in mesh 976
+Number of faces in mesh 560
+Number of faces in mesh 92
+Number of faces in mesh 286
+Number of faces in mesh 1364
+Number of faces in mesh 352
+Number of faces in mesh 608
+Number of faces in mesh 264
+Number of faces in mesh 264
+Number of faces in mesh 648
+Number of faces in mesh 896
+Number of faces in mesh 96
+Number of faces in mesh 1504
+Number of faces in mesh 20
+Number of faces in mesh 20
+Number of faces in mesh 286
+Number of faces in mesh 32
+Number of faces in mesh 70
+Number of faces in mesh 118
+Number of faces in mesh 264
+Number of faces in mesh 32
+Number of faces in mesh 4224
+Number of faces in mesh 52
+Number of faces in mesh 8288
+Number of faces in mesh 1484
+Number of faces in mesh 1484
+Number of faces in mesh 192
+Number of faces in mesh 188
+Number of faces in mesh 388
+Number of faces in mesh 148
+Number of faces in mesh 640
+Number of faces in mesh 44
+Number of faces in mesh 20
+Number of faces in mesh 1008
+Number of faces in mesh 1576
+Number of faces in mesh 92
+Number of faces in mesh 1470
+Number of faces in mesh 92
+Number of faces in mesh 164
+Number of faces in mesh 1352
+Number of faces in mesh 32
+Number of faces in mesh 1234
+Number of faces in mesh 60
+Number of faces in mesh 100
+Number of faces in mesh 128
+Number of faces in mesh 324
+Number of faces in mesh 14116
+Number of faces in mesh 92
+Number of faces in mesh 92
+Number of faces in mesh 164
+Number of faces in mesh 92
+Number of faces in mesh 624
+Number of faces in mesh 92
+Number of faces in mesh 20
+Number of faces in mesh 118
+Number of faces in mesh 12
+Number of faces in mesh 316
+Number of faces in mesh 208
+Number of faces in mesh 92
+Number of faces in mesh 480
+Number of faces in mesh 118
+Number of faces in mesh 1008
+Number of faces in mesh 16
+Number of faces in mesh 148
+Number of faces in mesh 32
+Number of faces in mesh 700
+Number of faces in mesh 380
+Number of faces in mesh 296
+Number of faces in mesh 1352
+Number of faces in mesh 20
+Number of faces in mesh 92
+Number of faces in mesh 12
+Number of faces in mesh 404
+Number of faces in mesh 32
+Number of faces in mesh 92
+Number of faces in mesh 40
+Number of faces in mesh 744
+Number of faces in mesh 92
+Number of faces in mesh 440
+Number of faces in mesh 76
+Number of faces in mesh 160
+Number of faces in mesh 92
+Number of faces in mesh 128
+Number of faces in mesh 264
+Number of faces in mesh 3216
+Number of faces in mesh 20
+Number of faces in mesh 144
+Number of faces in mesh 92
+Number of faces in mesh 148
+Number of faces in mesh 92
+Number of faces in mesh 118
+Number of faces in mesh 544
+Number of faces in mesh 1552
+Number of faces in mesh 384
+Number of faces in mesh 544
+Number of faces in mesh 92
+Number of faces in mesh 1488
+Number of faces in mesh 1484
+Number of faces in mesh 82
+Number of faces in mesh 1008
+Number of faces in mesh 252
+Number of faces in mesh 1008
+Number of faces in mesh 336
+Number of faces in mesh 170
+Number of faces in mesh 1360
+Number of faces in mesh 2104
+Number of faces in mesh 92
+Number of faces in mesh 948
+Number of faces in mesh 3072
+Number of faces in mesh 654
+Number of faces in mesh 7466
+Number of faces in mesh 1364
+Number of faces in mesh 8288
+Number of faces in mesh 1420
+Number of faces in mesh 20
+Number of faces in mesh 316
+Number of faces in mesh 180
+Number of faces in mesh 1544
+Number of faces in mesh 672
+Number of faces in mesh 264
+Number of faces in mesh 20
+Number of faces in mesh 92
+Number of faces in mesh 44
+Number of faces in mesh 118
+Number of faces in mesh 1000
+Number of faces in mesh 1396
+Number of faces in mesh 264
+Number of faces in mesh 946
+Number of faces in mesh 12
+Number of faces in mesh 92
+Number of faces in mesh 384
+Number of faces in mesh 1658
+Number of faces in mesh 546
+Number of faces in mesh 20
+Number of faces in mesh 16
+Number of faces in mesh 380
+Number of faces in mesh 32
+Number of faces in mesh 976
+Number of faces in mesh 12
+Number of faces in mesh 1112
+Number of faces in mesh 264
+Number of faces in mesh 92
+Number of faces in mesh 150
+Number of faces in mesh 208
+Number of faces in mesh 14116
+Number of faces in mesh 272
+Number of faces in mesh 72
+Number of faces in mesh 320
+Number of faces in mesh 92
+Number of faces in mesh 92
+Number of faces in mesh 92
+Number of faces in mesh 86
+Number of faces in mesh 264
+Number of faces in mesh 40
+Number of faces in mesh 480
+Number of faces in mesh 300
+Number of faces in mesh 1112
+Number of faces in mesh 208
+Number of faces in mesh 52
+Number of faces in mesh 12
+Number of faces in mesh 300
+Number of faces in mesh 60
+Number of faces in mesh 12
+Number of faces in mesh 3216
+Number of faces in mesh 1436
+Number of faces in mesh 92
+Number of faces in mesh 210
+Number of faces in mesh 12
+Number of faces in mesh 76
+Number of faces in mesh 20
+Number of faces in mesh 16
+Number of faces in mesh 32
+Number of faces in mesh 264
+Number of faces in mesh 1544
+Number of faces in mesh 208
+Number of faces in mesh 700
+Number of faces in mesh 736
+Number of faces in mesh 544
+Number of faces in mesh 126
+Number of faces in mesh 448
+Number of faces in mesh 272
+Number of faces in mesh 60
+Number of faces in mesh 20
+Number of faces in mesh 92
+Number of faces in mesh 20
+Number of faces in mesh 212
+Number of faces in mesh 20
+Number of faces in mesh 92
+Number of faces in mesh 20
+Number of faces in mesh 92
+Number of faces in mesh 2240
+Number of faces in mesh 16
+Number of faces in mesh 128
+Number of faces in mesh 32
+Number of faces in mesh 200
+Number of faces in mesh 1352
+Number of faces in mesh 80
+Number of faces in mesh 100
+Number of faces in mesh 32
+Number of faces in mesh 2104
+Number of faces in mesh 92
+Number of faces in mesh 12
+Number of faces in mesh 82
+Number of faces in mesh 284
+Number of faces in mesh 92
+Number of faces in mesh 20
+Number of faces in mesh 4224
+Number of faces in mesh 20
+Number of faces in mesh 544
+Number of faces in mesh 1240
+Number of faces in mesh 20
+Number of faces in mesh 1234
+Number of faces in mesh 412
+Number of faces in mesh 388
+Number of faces in mesh 1084
+Number of faces in mesh 8288
+Number of faces in mesh 1552
+Number of faces in mesh 92
+Number of faces in mesh 20
+Number of faces in mesh 1436
+Number of faces in mesh 24
+Number of faces in mesh 92
+Number of faces in mesh 1352
+Number of faces in mesh 92
+Number of faces in mesh 2240
+Number of faces in mesh 324
+Number of faces in mesh 198
+Number of faces in mesh 216
+Number of faces in mesh 16
+Number of faces in mesh 192
+Number of faces in mesh 1552
+Number of faces in mesh 1658
+Number of faces in mesh 448
+Number of faces in mesh 264
+Number of faces in mesh 518
+Number of faces in mesh 12
+Number of faces in mesh 96
+Number of faces in mesh 308
+Number of faces in mesh 208
+Number of faces in mesh 86
+Number of faces in mesh 824
+Number of faces in mesh 12
+Number of faces in mesh 3501
+Number of faces in mesh 12
+Number of faces in mesh 1040
+Number of faces in mesh 92
+Number of faces in mesh 796
+Number of faces in mesh 680
+Number of faces in mesh 264
+Number of faces in mesh 92
+Number of faces in mesh 744
+Number of faces in mesh 976
+Number of faces in mesh 316
+Number of faces in mesh 1008
+Number of faces in mesh 12
+Number of faces in mesh 92
+Number of faces in mesh 92
+Number of faces in mesh 60
+Number of faces in mesh 60
+Number of faces in mesh 92
+Number of faces in mesh 2824
+Number of faces in mesh 264
+Number of faces in mesh 1416
+Number of faces in mesh 352
+Number of faces in mesh 2104
+Number of faces in mesh 126
+Number of faces in mesh 36
+Number of faces in mesh 12
+Number of faces in mesh 544
+Number of faces in mesh 144
+Number of faces in mesh 92
+Number of faces in mesh 60
+Number of faces in mesh 72
+Number of faces in mesh 264
+Number of faces in mesh 7466
+Number of faces in mesh 24
+Number of faces in mesh 1436
+Number of faces in mesh 208
+Number of faces in mesh 308
+Number of faces in mesh 224
+Number of faces in mesh 168
+Number of faces in mesh 60
+Number of faces in mesh 328
+Number of faces in mesh 16
+Number of faces in mesh 1112
+Number of faces in mesh 40
+Number of faces in mesh 192
+Number of faces in mesh 2608
+Number of faces in mesh 336
+Number of faces in mesh 12
+Number of faces in mesh 118
+Number of faces in mesh 272
+Number of faces in mesh 384
+Number of faces in mesh 272
+Number of faces in mesh 416
+Number of faces in mesh 208
+Number of faces in mesh 192
+Number of faces in mesh 796
+Number of faces in mesh 1084
+Number of faces in mesh 12
+Number of faces in mesh 610
+Number of faces in mesh 14116
+Number of faces in mesh 264
+Number of faces in mesh 1576
+Number of faces in mesh 32
+Number of faces in mesh 20
+Number of faces in mesh 16
+Number of faces in mesh 752
+Number of faces in mesh 2824
+Number of faces in mesh 12
+Number of faces in mesh 12
+Number of faces in mesh 1352
+Number of faces in mesh 92
+Number of faces in mesh 7466
+Number of faces in mesh 118
+Number of faces in mesh 946
+Number of faces in mesh 544
+Number of faces in mesh 8288
+Number of faces in mesh 824
+Number of faces in mesh 208
+Number of faces in mesh 92
+Number of faces in mesh 16
+Number of faces in mesh 2274
+Number of faces in mesh 2274
+Number of faces in mesh 1360
+Number of faces in mesh 4224
+Number of faces in mesh 92
+Number of faces in mesh 1084
+Number of faces in mesh 92
+Number of faces in mesh 2104
+Number of faces in mesh 1234
+Number of faces in mesh 160
+Number of faces in mesh 3501
+Number of faces in mesh 284
+Number of faces in mesh 1484
+Number of faces in mesh 12
+Number of faces in mesh 1112
+Number of faces in mesh 128
+Number of faces in mesh 1364
+Number of faces in mesh 328
+Number of faces in mesh 264
+Number of faces in mesh 20
+Number of faces in mesh 252
+Number of faces in mesh 316
+Number of faces in mesh 2104
+Number of faces in mesh 1040
+Number of faces in mesh 336
+Number of faces in mesh 264
+Number of faces in mesh 224
+Number of faces in mesh 1112
+Number of faces in mesh 60
+Number of faces in mesh 52
+Number of faces in mesh 118
+Number of faces in mesh 92
+Number of faces in mesh 60
+Number of faces in mesh 264
+Number of faces in mesh 640
+Number of faces in mesh 60
+Number of faces in mesh 16
+Number of faces in mesh 2964
+Number of faces in mesh 1436
+Number of faces in mesh 544
+Number of faces in mesh 4608
+Number of faces in mesh 92
+Number of faces in mesh 24
+Number of faces in mesh 92
+Number of faces in mesh 92
+Number of faces in mesh 544
+Number of faces in mesh 1400
+Number of faces in mesh 1234
+Number of faces in mesh 32
+Number of faces in mesh 1084
+Number of faces in mesh 92
+Number of faces in mesh 92
+Number of faces in mesh 1488
+Number of faces in mesh 3072
+Number of faces in mesh 1290
+Number of faces in mesh 212
+Number of faces in mesh 84
+Number of faces in mesh 1504
+Number of faces in mesh 92
+Number of faces in mesh 3072
+Number of faces in mesh 92
+Number of faces in mesh 12
+Number of faces in mesh 352
+Number of faces in mesh 264
+Number of faces in mesh 4608
+Number of faces in mesh 768
+Number of faces in mesh 518
+Number of faces in mesh 56
+Number of faces in mesh 1352
+Number of faces in mesh 1040
+Number of faces in mesh 1352
+Number of faces in mesh 208
+Number of faces in mesh 272
+Number of faces in mesh 504
+Number of faces in mesh 1378
+Number of faces in mesh 744
+Number of faces in mesh 74
+Number of faces in mesh 544
+Number of faces in mesh 144
+Number of faces in mesh 12
+Number of faces in mesh 1544
+Number of faces in mesh 544
+Number of faces in mesh 736
+Number of faces in mesh 20
+Number of faces in mesh 1164
+Number of faces in mesh 1240
+Number of faces in mesh 148
+Number of faces in mesh 316
+Number of faces in mesh 80
+Number of faces in mesh 92
+Number of faces in mesh 92
+Number of faces in mesh 1240
+Number of faces in mesh 452
+Number of faces in mesh 968
+Number of faces in mesh 92
+Number of faces in mesh 1234
+Number of faces in mesh 1044
+Number of faces in mesh 20
+Number of faces in mesh 1290
+Number of faces in mesh 36
+Number of faces in mesh 264
+Number of faces in mesh 546
+Number of faces in mesh 208
+Number of faces in mesh 472
+Number of faces in mesh 32
+Number of faces in mesh 92
+Number of faces in mesh 32
+Number of faces in mesh 2104
+Number of faces in mesh 92
+Number of faces in mesh 1000
+Number of faces in mesh 12
+Number of faces in mesh 52
+Number of faces in mesh 12
+Number of faces in mesh 1360
+Setting up Scene
+Copying to Device
+num of vertices : 312294 
+num of triangles : 466014 
+num of materials : 19 
+Device imageWidth=1024, imageHeight=1024
+HERE
+811521
+Done Copying basic objects to device
+Post Scene BBoxes no error
+Post Find Min Max no error
+Post Compute Morton Codes no error
+Post Sort Morton Codes no error
+Post Generate Hierarchy no error
+Post compute Tree BBoxes no error
+Post Build Tree no error
+Post BVH Setup no error
+found min(-6.190817, -1.999786 , -18.425783)found max(6.190817, 2.957445 , -6.807890)Running
+Start of Ray Trace run no error
+Before Light Kernel no error
+Post Init Light no error
+
+Launching Ray tracer kernel
+Post Set Stack Limit no error
+Post Get Stack Limit no error
+Post Ray Trace no error
+
+Done rendering Scene
+Fetching Image
+imageSize 1048576
+Writing Image
+==6308== Profiling application: ./cuda_bvh -i ../objs/funyz/robot-dog.obj -o robotdog.bmp -f 2.8 -v 35 -P 11.0 -a 0.01,0.01,0.01 -p -4.0,2.0,-4.0 -w 1024 -h 1024 -R 0.3
+==6308== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 99.92%  30.8174s         1  30.8174s  30.8174s  30.8174s  runRayTracerKernelRec(Scene_d*, int)
+  0.03%  8.3811ms         7  1.1973ms     960ns  4.4605ms  [CUDA memcpy HtoD]
+  0.02%  6.0090ms         3  2.0030ms  2.5600us  6.0039ms  [CUDA memcpy DtoH]
+  0.01%  3.3547ms         1  3.3547ms  3.3547ms  3.3547ms  BuildHierarchy(int*, BoundingBox*, unsigned int*, int, HNode*, BoundingBox*, int*)
+  0.01%  2.8815ms         1  2.8815ms  2.8815ms  2.8815ms  RefitBounds(BoundingBox*, int, HNode*, int*)
+  0.00%  958.28us         1  958.28us  958.28us  958.28us  computeBoundingBoxes_kernel(int, Vec3d*, TriangleIndices*, BoundingBox*)
+  0.00%  452.74us         1  452.74us  452.74us  452.74us  computeMortonCodesKernel(int*, unsigned int*, BoundingBox*, TriangleIndices*, Vec3d*, int, Vec3d, Vec3d)
+  0.00%  450.53us         4  112.63us  111.97us  113.76us  void thrust::system::cuda::detail::cub_::DeviceRadixSortDownsweepKernel<thrust::system::cuda::detail::cub_::DeviceRadixSortDispatch<bool=0, int, unsigned int, int>::PtxDownsweepPolicy, bool=0, int, unsigned int, int>(unsigned int*, unsigned int, int*, int, thrust::system::cuda::detail::cub_::DeviceRadixSortDispatch<bool=0, int, unsigned int, int>::PtxDownsweepPolicy*, int*, int, int, bool, bool, thrust::system::cuda::detail::cub_::GridEvenShare<int*>)
+  0.00%  383.17us         1  383.17us  383.17us  383.17us  AverageSuperSamplingKernel(Vec3d*, Vec3d*, int, int, int)
+  0.00%  321.35us         3  107.12us  104.48us  108.87us  void thrust::system::cuda::detail::cub_::DeviceRadixSortDownsweepKernel<thrust::system::cuda::detail::cub_::DeviceRadixSortDispatch<bool=0, int, unsigned int, int>::PtxAltDownsweepPolicy, bool=0, int, unsigned int, int>(unsigned int*, unsigned int, int*, int, thrust::system::cuda::detail::cub_::DeviceRadixSortDispatch<bool=0, int, unsigned int, int>::PtxAltDownsweepPolicy*, int*, int, int, bool, bool, thrust::system::cuda::detail::cub_::GridEvenShare<int*>)
+  0.00%  320.96us         1  320.96us  320.96us  320.96us  _ZN6thrust6system4cuda6detail5bulk_6detail15launch_by_valueILj0ENS4_9cuda_taskINS3_14parallel_groupINS3_16concurrent_groupINS3_5agentILm1EEELm0EEELm0EEENS4_7closureINS2_13reduce_detail17reduce_partitionsENS_5tupleINS4_6cursorILj1EEENS_18transform_iteratorI11minAccessorNS_10device_ptrI11BoundingBoxEE5Vec3dNS_11use_defaultEEENS2_21uniform_decompositionIlEENS_6detail15normal_iteratorINS_7pointerISO_NS2_3tagESP_SP_EEEESO_10minFunctorNS_9null_typeES10_S10_S10_EEEEEEEEvT0_
+  0.00%  318.50us         1  318.50us  318.50us  318.50us  _ZN6thrust6system4cuda6detail5bulk_6detail15launch_by_valueILj0ENS4_9cuda_taskINS3_14parallel_groupINS3_16concurrent_groupINS3_5agentILm1EEELm0EEELm0EEENS4_7closureINS2_13reduce_detail17reduce_partitionsENS_5tupleINS4_6cursorILj1EEENS_18transform_iteratorI11maxAccessorNS_10device_ptrI11BoundingBoxEE5Vec3dNS_11use_defaultEEENS2_21uniform_decompositionIlEENS_6detail15normal_iteratorINS_7pointerISO_NS2_3tagESP_SP_EEEESO_10maxFunctorNS_9null_typeES10_S10_S10_EEEEEEEEvT0_
+  0.00%  145.95us         4  36.488us  35.584us  37.217us  void thrust::system::cuda::detail::cub_::DeviceRadixSortUpsweepKernel<thrust::system::cuda::detail::cub_::DeviceRadixSortDispatch<bool=0, int, unsigned int, int>::PtxUpsweepPolicy, bool=0, int, int>(unsigned int*, int*, unsigned int*, int, int, bool, thrust::system::cuda::detail::cub_::GridEvenShare<unsigned int*>)
+  0.00%  143.39us         7  20.484us  16.352us  23.584us  void thrust::system::cuda::detail::cub_::RadixSortScanBinsKernel<thrust::system::cuda::detail::cub_::DeviceRadixSortDispatch<bool=0, int, unsigned int, int>::PtxScanPolicy, int>(int*, int)
+  0.00%  93.504us         3  31.168us  30.560us  31.840us  void thrust::system::cuda::detail::cub_::DeviceRadixSortUpsweepKernel<thrust::system::cuda::detail::cub_::DeviceRadixSortDispatch<bool=0, int, unsigned int, int>::PtxAltUpsweepPolicy, bool=0, int, int>(unsigned int*, int*, unsigned int*, int, int, bool, thrust::system::cuda::detail::cub_::GridEvenShare<unsigned int*>)
+  0.00%  13.344us         1  13.344us  13.344us  13.344us  void thrust::system::cuda::detail::bulk_::detail::launch_by_value<unsigned int=0, thrust::system::cuda::detail::bulk_::detail::cuda_task<thrust::system::cuda::detail::bulk_::parallel_group<thrust::system::cuda::detail::bulk_::concurrent_group<thrust::system::cuda::detail::bulk_::agent<unsigned long=1>, unsigned long=0>, unsigned long=0>, thrust::system::cuda::detail::bulk_::detail::closure<thrust::system::cuda::detail::reduce_detail::reduce_partitions, thrust::tuple<thrust::system::cuda::detail::bulk_::detail::cursor<unsigned int=1>, thrust::detail::normal_iterator<thrust::pointer<Vec3d, thrust::system::cuda::detail::tag, thrust::use_default, thrust::use_default>>, thrust::detail::normal_iterator<thrust::pointer<Vec3d, thrust::system::cuda::detail::tag, thrust::use_default, thrust::use_default>>, thrust::detail::normal_iterator<thrust::pointer<Vec3d, thrust::system::cuda::detail::tag, thrust::use_default, thrust::use_default>>, maxFunctor, thrust::null_type, thrust::null_type, thrust::null_type, thrust::null_type, thrust::null_type>>>>(unsigned long=1)
+  0.00%  13.184us         1  13.184us  13.184us  13.184us  void thrust::system::cuda::detail::bulk_::detail::launch_by_value<unsigned int=0, thrust::system::cuda::detail::bulk_::detail::cuda_task<thrust::system::cuda::detail::bulk_::parallel_group<thrust::system::cuda::detail::bulk_::concurrent_group<thrust::system::cuda::detail::bulk_::agent<unsigned long=1>, unsigned long=0>, unsigned long=0>, thrust::system::cuda::detail::bulk_::detail::closure<thrust::system::cuda::detail::reduce_detail::reduce_partitions, thrust::tuple<thrust::system::cuda::detail::bulk_::detail::cursor<unsigned int=1>, thrust::detail::normal_iterator<thrust::pointer<Vec3d, thrust::system::cuda::detail::tag, thrust::use_default, thrust::use_default>>, thrust::detail::normal_iterator<thrust::pointer<Vec3d, thrust::system::cuda::detail::tag, thrust::use_default, thrust::use_default>>, thrust::detail::normal_iterator<thrust::pointer<Vec3d, thrust::system::cuda::detail::tag, thrust::use_default, thrust::use_default>>, minFunctor, thrust::null_type, thrust::null_type, thrust::null_type, thrust::null_type, thrust::null_type>>>>(unsigned long=1)
+  0.00%  9.3440us         2  4.6720us  4.4160us  4.9280us  [CUDA memcpy DtoD]
+  0.00%  5.7280us         2  2.8640us  2.8480us  2.8800us  void thrust::system::cuda::detail::bulk_::detail::launch_by_value<unsigned int=0, thrust::system::cuda::detail::bulk_::detail::cuda_task<thrust::system::cuda::detail::bulk_::parallel_group<thrust::system::cuda::detail::bulk_::concurrent_group<thrust::system::cuda::detail::bulk_::agent<unsigned long=1>, unsigned long=0>, unsigned long=0>, thrust::system::cuda::detail::bulk_::detail::closure<thrust::system::cuda::detail::for_each_n_detail::for_each_kernel, thrust::tuple<thrust::system::cuda::detail::bulk_::detail::cursor<unsigned int=0>, thrust::pointer<Vec3d, thrust::system::cuda::detail::tag, thrust::use_default, thrust::use_default>, thrust::detail::wrapped_function<thrust::detail::allocator_traits_detail::gozer, void>, unsigned int, thrust::null_type, thrust::null_type, thrust::null_type, thrust::null_type, thrust::null_type, thrust::null_type>>>>(unsigned long=1)
+  0.00%  3.0400us         1  3.0400us  3.0400us  3.0400us  initLight(Scene_d*, Light_h, Light*)
+
+==6308== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 99.28%  30.8255s        14  2.20182s  3.0900us  30.8174s  cudaDeviceSynchronize
+  0.65%  200.87ms         1  200.87ms  200.87ms  200.87ms  cudaDeviceSetLimit
+  0.05%  15.999ms         8  1.9999ms  12.984us  6.3778ms  cudaMemcpy
+  0.01%  2.3462ms        18  130.34us  8.0640us  1.0693ms  cudaFree
+  0.01%  2.1521ms        20  107.61us  9.7940us  280.90us  cudaMalloc
+  0.00%  714.19us        34  21.005us  8.1560us  263.23us  cudaLaunch
+  0.00%  643.65us         4  160.91us  13.725us  311.80us  cudaMemcpyAsync
+  0.00%  336.53us         1  336.53us  336.53us  336.53us  cudaDeviceReset
+  0.00%  258.78us        83  3.1170us     130ns  115.72us  cuDeviceGetAttribute
+  0.00%  86.335us        32  2.6970us  1.9370us  8.4330us  cudaFuncGetAttributes
+  0.00%  57.066us       179     318ns     237ns  6.6050us  cudaSetupArgument
+  0.00%  33.714us         1  33.714us  33.714us  33.714us  cuDeviceTotalMem
+  0.00%  25.966us         1  25.966us  25.966us  25.966us  cuDeviceGetName
+  0.00%  14.147us        34     416ns     199ns  2.6850us  cudaConfigureCall
+  0.00%  11.910us         6  1.9850us  1.3950us  4.1900us  cudaEventCreateWithFlags
+  0.00%  11.763us        20     588ns     276ns  2.1000us  cudaGetDevice
+  0.00%  11.297us        14     806ns     717ns  1.3500us  cudaDeviceSetSharedMemConfig
+  0.00%  11.025us        25     441ns     164ns  1.9780us  cudaGetLastError
+  0.00%  8.3030us         6  1.3830us     815ns  3.3020us  cudaEventDestroy
+  0.00%  7.3210us        17     430ns     280ns  1.4160us  cudaDeviceGetAttribute
+  0.00%  7.0930us         6  1.1820us     846ns  2.1830us  cudaEventRecord
+  0.00%  5.0250us        21     239ns     207ns     419ns  cudaPeekAtLastError
+  0.00%  2.7770us        14     198ns     151ns     550ns  cudaGetErrorString
+  0.00%  2.7130us         2  1.3560us     527ns  2.1860us  cudaDeviceGetSharedMemConfig
+  0.00%  2.3510us         2  1.1750us     439ns  1.9120us  cuDeviceGetCount
+  0.00%  2.3340us         1  2.3340us  2.3340us  2.3340us  cudaDeviceGetLimit
+  0.00%     558ns         2     279ns     205ns     353ns  cuDeviceGet
