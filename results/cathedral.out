@@ -97,3 +97,4 @@ Time(%)      Time     Calls       Avg       Min       Max  Name
   0.00%  2.4230us         2  1.2110us     476ns  1.9470us  cuDeviceGetCount
   0.00%  2.3060us         1  2.3060us  2.3060us  2.3060us  cudaDeviceGetLimit
   0.00%     555ns         2     277ns     210ns     345ns  cuDeviceGet
+
