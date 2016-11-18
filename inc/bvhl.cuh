@@ -13,12 +13,14 @@ Node_L{
     int parent;
     int childA;
     int childB;
+    //Indexes into the sortedDims and sortedObjectIds
+    //0: radius, 1: theta, 2: phi
     int dmins[3];
     int dmaxs[3];
 };
 
 
-#define NODE_IS_CHILD(x) (x.childA == x.childB)
+#define NODE_IS_LEAF(x) (x.childA == x.childB)
 #define MY_IDX(idx) ((1<<depth) - 1 + idx)
 #define FIND_CHILDA_OFFSET(idx) ((1 << (depth+1)) - 1 + 2*idx)
 

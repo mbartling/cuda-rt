@@ -3,6 +3,9 @@
 #include <thrust/device_ptr.h>
 
 #define OFFSET(i) i*numTriangles
+#define MAX_DEPTH 20
+#define MIN_ELEMS_PER_NODE 5
+
 __host__ __device__
 Vec3d toSpherical(const Vec3d& pos, const Vec3d& lightOrigin){
     double r = norm(pos - lightOrigin);
@@ -38,6 +41,126 @@ void setupBounds(Vec3d* lightOrigin,
     sortedDims[idx + OFFSET(2)] = spCoords.z;
 }
 
+__global__
+void initRoot(int depth, Node_L* nodes, double* sortedDims, int* sortedObjectIds, BSphere* treeBSpheres, BSphere* objBounds, BoundingBox* BBoxs, int numTriangles, Vec3d* lightOrigin){
+    if(idx > 0)
+        return;
+    nodes[0].parent = 0;
+    nodes[0].childA = 1;
+    nodes[0].childB = 2;
+
+    for(int i = 0; i < 3; i++){
+        nodes[0].dmins[i] = 0;
+        nodes[0].dmaxs[i] = numTriangles;
+    }
+}
+
+__global__
+void BuildHierarchy(int depth, Node_L* nodes, double* sortedDims, int* sortedObjectIds, BSphere* treeBSpheres, BSphere* objBounds, BoundingBox* BBoxs, int numTriangles, Vec3d* lightOrigin){
+
+    int idx = blockDim.x * blockIdx.x + threadIdx.x;
+    if(idx >= (1 << depth))
+        return;
+
+    int numElems = 0;
+    for(int i = 0; i < 3; i++)
+        numElems += nodes[MY_IDX(idx)].dmaxs[i] - nodes[MY_IDX(idx)].dmins[i];
+
+    if(numElems < define MIN_ELEMS_PER_NODE || depth >= MAX_DEPTH){
+        nodes[MY_IDX(idx)].childA = MY_IDX(idx);
+        nodes[MY_IDX(idx)].childB = MY_IDX(idx);
+        return;
+    }
+
+    int splitDim = 0;
+    int splitLoc = 0;
+    double minCost = 1.0e308;
+
+    int k = 0;
+    double* costL = new double[numElems];
+    double* costR = new double[numElems];
+    double projRadius = sortedDims[nodes[MY_IDX(idx)].dmaxs[0]];
+    
+    for(int i = i; i < 3; i++)
+    {
+        double solidAngle = ProjectionArea(*lightOrigin, projRadius, objBounds[sortedObjectIds[nodes[MY_IDX(idx)].dmins[i] + OFFSET(i)]]);
+        costL[k] = solidAngle;
+        costR[numElems - k - 1] = solidAngle;
+        k++;
+        for(int j = nodes[MY_IDX(idx)].dmins[i] + 1; j < nodes[MY_IDX(idx)].dmaxs[i]; j++)
+        {
+            //Project on the sphere centered on lightOrigin with projectionRadius defined at each level
+            solidAngle = ProjectionArea(*lightOrigin, projRadius, objBounds[sortedObjectIds[j + OFFSET(i)]]);
+            costL[k] = costL[k-1] + solidAngle;
+            costR[numElems - k - 1] = costR[numElems - k] + solidAngle;
+            k++;
+        }// End inner for
+    }
+
+    // Find the Split Position
+    k = 0;
+    for(int i = 0; i < 3; i++){
+        int numThingsInDim = nodes[MY_IDX(idx)].dmaxs[i] - nodes[MY_IDX(idx)].dmins[i];
+        for(int j = nodes[MY_IDX(idx)].dmins[i], N = 1; j < nodes[MY_IDX(idx)].dmaxs[i]; j++, N++)
+        {
+            double currentCost = N*costL[k] + (numThingsInDim - N)*costR[k];
+            if(currentCost < minCost){
+                splitDim = i;
+                splitLoc = j;
+                minCost = currentCost;
+            }
+
+            k++;
+        }
+    }
+
+    BoundingBox BLeft, BRight;
+    //TODO FIXE THIS
+    //Next line doesnt need to be recomputed
+    //And pretty sure there are errors with the indexing
+    //double splitVal = toSpherical(objBounds[sortedObjectId[splitLoc + OFFSET(splitDim)]], *lightOrigin)[splitDim];
+    double splitVal = sortedDims[sortedObjectIds[splitLoc + OFFSET(splitDim)]];
+    for(int i = 0; i < 3; i++){
+        int numThingsInDim = nodes[MY_IDX(idx)].dmaxs[i] - nodes[MY_IDX(idx)].dmins[i];
+        for(int j = nodes[MY_IDX(idx)].dmins[i], N = 1; j < nodes[MY_IDX(idx)].dmaxs[i]; j++, N++)
+        {
+            BoundingBox temp = BBoxs[sortedObjectIds[j + OFFSET(i)]];
+            Vec3d sphereCoords = toSpherical(objBounds[sortedObjectIds[j + OFFSET(i)]].pos, *lightOrigin);
+            //double sphereCoord = sortedDims[sortedObjectIds[j + OFFSET(i)]];
+            if (sphereCoords[splitDim] <= splitVal)
+            //if (sphereCoord <= splitVal)
+                BLeft.merge(temp);
+            else
+                BRight.merge(temp);
+        }
+
+    }
+
+    // Update Children
+    int childA = FIND_CHILDA_OFFSET(idx);
+    int childB = childA + 1;
+    nodes[MY_IDX(idx)].childA = childA;
+    nodes[MY_IDX(idx)].childB = childB;
+
+    nodes[childA].parent = MY_IDX(idx);
+    nodes[childB].parent = MY_IDX(idx);
+
+    treeBSpheres[childA] = BSphere(BLeft.bmin, BLeft.bmax);
+    treeBSpheres[childB] = BSphere(BRight.bmin, BRight.bmax);
+    for(int i = 0; i < 3; i++){
+        nodes[childA].dmins[i] = nodes[MY_IDX(idx)].dmins[i];
+        nodes[childA].dmaxs[i] = nodes[MY_IDX(idx)].dmaxs[i];
+        nodes[childB].dmins[i] = nodes[MY_IDX(idx)].dmins[i];
+        nodes[childB].dmaxs[i] = nodes[MY_IDX(idx)].dmaxs[i];
+    }
+    
+    nodes[childA].dmaxs[splitDim] = splitLoc;
+    nodes[childB].dmins[splitDim] = splitLoc;
+
+    delete[] costL;
+    delete[] costR;
+}
+
 void BVH_L::sortDimensions(){
     thrust::device_ptr<double> dev_Dims(sortedDims);
     thrust::device_ptr<int> dev_object_ids(sortedObjectIds);
@@ -67,6 +190,15 @@ void BVH_L::buildTree(Vec3d mMin, Vec3d mMax){
     
     // Now Sort the dimensions
     sortDimensions();
+
+    // Initialize root
+    
+    //Build Hierarchy
+    //+ 1 is done on purpose to Clean up leaf nodes
+    for(int i = 0; i < MAX_DEPTH  + 1; i++)
+    {
+
+    }
 
 
 }
