@@ -1,4 +1,4 @@
-#include "bvhl.cu"
+#include "bvhl.cuh"
 #include <thrust/sort.h>
 #include <thrust/device_ptr.h>
 
@@ -19,8 +19,8 @@ void setupBounds(Vec3d* lightOrigin,
         Vec3d mMin, 
         Vec3d mMax, 
         BoundingBox* BBoxs, 
-        Vec3d* sortedDims, 
-        Int3Ids* sortedObjectIds, 
+        double* sortedDims, 
+        int* sortedObjectIds, 
         BSphere* objBounds, 
         int numTriangles)
 {
@@ -43,6 +43,7 @@ void setupBounds(Vec3d* lightOrigin,
 
 __global__
 void initRoot(int depth, Node_L* nodes, double* sortedDims, int* sortedObjectIds, BSphere* treeBSpheres, BSphere* objBounds, BoundingBox* BBoxs, int numTriangles, Vec3d* lightOrigin){
+    int idx = blockDim.x * blockIdx.x + threadIdx.x;
     if(idx > 0)
         return;
     nodes[0].parent = 0;
@@ -66,7 +67,7 @@ void BuildHierarchy(int depth, Node_L* nodes, double* sortedDims, int* sortedObj
     for(int i = 0; i < 3; i++)
         numElems += nodes[MY_IDX(idx)].dmaxs[i] - nodes[MY_IDX(idx)].dmins[i];
 
-    if(numElems < define MIN_ELEMS_PER_NODE || depth >= MAX_DEPTH){
+    if(numElems < MIN_ELEMS_PER_NODE || depth >= MAX_DEPTH){
         nodes[MY_IDX(idx)].childA = MY_IDX(idx);
         nodes[MY_IDX(idx)].childB = MY_IDX(idx);
         return;

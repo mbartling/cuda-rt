@@ -5,11 +5,14 @@
 #include "material.h"
 #include "isect.h"
 #include "ray.h"
+#include "bsphere.cuh"
+#include "tris.h"
+#include "bbox.h"
 #include <cuda.h>
 
 class Scene_d;
 
-Node_L{
+struct Node_L{
     int parent;
     int childA;
     int childB;
@@ -48,7 +51,7 @@ class BVH_L{
         void setUp(Vec3d* mvertices, Vec3d* mnormals, BoundingBox* mBBoxs, TriangleIndices* mt_indices, int mnumTriangles, Material* mmaterials, Vec3d mMin , Vec3d mMax, int* mmaterial_ids, Vec3d lightPos);
         ~BVH_L();
         
-        void buildTree();
+        void buildTree(Vec3d mMin, Vec3d mMax);
         void sortDimensions();
 
         __device__
