@@ -11,11 +11,11 @@ void BVH_L::setUp(Vec3d* mvertices, Vec3d* mnormals, BoundingBox* mBBoxs, Triang
     material_ids = mmaterial_ids;
 
     cudaMalloc(&lightOrigin, sizeof(Vec3d));
-    cudaMemcpy(lightOrigin, &lightPos, sizeof(Vec3d));
+    cudaMemcpy(lightOrigin, &lightPos, sizeof(Vec3d), cudaMemcpyHostToDevice);
 
     
     cudaMalloc(&nodes, (2*numTriangles - 1)*sizeof(Node_L));
-    cudaMalloc(&treeBSpheres, (2*numTriangles - 1)*sizeof(BSPhere));
+    cudaMalloc(&treeBSpheres, (2*numTriangles - 1)*sizeof(BSphere));
     cudaMalloc(&sortedDims, 3*numTriangles*sizeof(double));
     cudaMalloc(&sortedObjectIds, 3*numTriangles*sizeof(int));
     cudaMalloc(&objBounds, numTriangles*sizeof(BSphere));

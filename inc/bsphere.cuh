@@ -37,7 +37,8 @@ class BSphereProj {
 
 };
 */
+__device__ __inline__
 double ProjectionArea(Vec3d lightOrigin, double projRadius, const BSphere& bs){
-        double theta = atan2(bs.radius/norm(bs.pos - lightOrigin));
+        double theta = atan2(norm(bs.pos - lightOrigin), bs.radius);
         return 2*M_PI*(1 - cos(theta));
 }
